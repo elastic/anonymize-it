@@ -1,0 +1,8 @@
+elasticsearch==6.2.0
+elasticsearch-dsl==6.1.0
+Faker==0.8.15
+ipaddress==1.0.22
+python-dateutil==2.7.3
+six==1.11.0
+text-unidecode==1.2
+urllib3==1.22
