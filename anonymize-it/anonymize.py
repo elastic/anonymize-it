@@ -1,6 +1,8 @@
 import sys
 import json
 from anonymizers import Anonymizer
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def read_config(config_file):

@@ -3,7 +3,7 @@ from faker import Faker
 import warnings
 import readers
 import writers
-
+import utils
 
 class ConfigParserError(Exception):
     pass
@@ -40,6 +40,7 @@ class Anonymizer(metaclass=ABCMeta):
         self.writer_type = None
         self.reader = None
         self.writer = None
+        self.include_rest = None
         self.field_maps = {}
 
         self.parse_config()
@@ -55,8 +56,9 @@ class Anonymizer(metaclass=ABCMeta):
         """
         self.source = self.config.get('source')
         self.dest = self.config.get('dest')
-        self.masked_fields = self.config.get('masks')
+        self.masked_fields = self.config.get('include')
         self.suppressed_fields = self.config.get('exclude')
+        self.include_rest = self.config.get('include_rest')
 
         if not self.source:
             raise ConfigParserError("source error: source not defined. Please check config.")
@@ -65,9 +67,8 @@ class Anonymizer(metaclass=ABCMeta):
         if not self.masked_fields:
             warnings.warn("no masked fields included in config. No data will be anonymized", Warning)
 
-        warnings.warn("Masking Fields\n{}".format(self.masked_fields), Warning)
-        warnings.warn("Suppressing Fields\n{}".format("\n".join(self.suppressed_fields)), Warning)
-
+        print("Masking Fields\n{}".format(self.masked_fields))
+        print("Suppressing Fields\n{}".format("\n".join(self.suppressed_fields)))
 
         self.reader_type = self.source.get('type')
         self.writer_type = self.dest.get('type')
@@ -115,23 +116,15 @@ class Anonymizer(metaclass=ABCMeta):
                 mask = self.provider_map[mask_str]
                 map[value] = mask()
 
-        # next, read data in batches and anonymize the values
-        self.reader.get_data()
+        # read data in data object
+        self.data = self.reader.get_data(list(self.field_maps.keys()), self.suppressed_fields, self.include_rest)
+        self.data = [utils.flatten(obj) for obj in self.data]
 
-        # self.writer.write_data()
+        # anonymize the values
+        for field, v in self.field_maps.items():
+            if v:
+                for event in self.data:
+                    event[field] = self.field_maps[field][event[field]]
 
-    # @abstractmethod
-    # def get_data(self):
-    #     pass
-    #
-    # @abstractmethod
-    # def preprocess(self):
-    #     pass
-    #
-    # @abstractmethod
-    # def anonymize(self):
-    #     pass
-    #
-    # @abstractmethod
-    # def write_data(self):
-    #     pass
+        # write
+        self.writer.write_data(self.data)
