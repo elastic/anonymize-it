@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABCMeta
 import json
 
-class BaseWriter():
+class BaseWriter(metaclass=ABCMeta):
     def __init__(self, params):
         self.params = params
 

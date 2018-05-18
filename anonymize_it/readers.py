@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from elasticsearch import Elasticsearch, helpers
+from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, A
 
 
