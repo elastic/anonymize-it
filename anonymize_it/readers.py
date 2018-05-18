@@ -25,6 +25,7 @@ class ESReader(BaseReader):
         self.un = self.params.get('username')
         self.pw = self.params.get('password')
         self.index_pattern = self.params.get('index')
+        self.query = self.params.get('query')
         self.es = None
 
         if not all([self.host, self.un, self.pw]):
@@ -33,7 +34,7 @@ class ESReader(BaseReader):
         self.create_connection()
 
     def create_connection(self):
-        self.es = Elasticsearch([self.host], http_auth = (self.un, self.pw), verify_certs=False)
+        self.es = Elasticsearch([self.host], http_auth=(self.un, self.pw), verify_certs=False)
 
     def create_mappings(self):
         mappings = {}
@@ -41,7 +42,8 @@ class ESReader(BaseReader):
             mappings[field] = {}
             if provider:
                 s = Search(using=self.es, index=self.index_pattern)
-                s.update_from_dict({"query": {"match": {"docker.container.image": "found/kibana:5.0.2"}}})
+                if self.query:
+                    s.update_from_dict({"query": self.query})
                 a = A('terms', field=field, size=10000)
                 s.aggs.bucket('unique', a)
                 response = s.execute()
@@ -59,7 +61,8 @@ class ESReader(BaseReader):
         """
 
         s = Search(using=self.es, index=self.index_pattern)
-        s.update_from_dict({"query": {"match": {"docker.container.image": "found/kibana:5.0.2"}}})
+        if self.query:
+            s.update_from_dict({"query": self.query})
         print(s.to_dict())
         if not include_all:
             s = s.source(include=include, exclude=suppressed_fields)
