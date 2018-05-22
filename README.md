@@ -19,6 +19,11 @@ e.g.:
 
 ## Run as Script
 
+```
+python anonymize.py config.json
+```
+
+
 `config.json` defines the work to be done:
 
 *  `source` defines the location of the original data to be anonymized along with the type of reader that should be invoked.
