@@ -1,7 +1,23 @@
 # anonymize-it
 a general utility for anonymizing data
 
+`anonymize-it` can be run as a script that accepts a config file specifying the type source, anonymization mappings, and destination and an anonymizer pipeline. Individual pipeline components can also be imported into any python program that wishes to anonymize data. 
+
+Currently, the anonymization procedue relies on providers from [`Faker`](http://faker.readthedocs.io) to perform masking of fields.
+
+e.g.:
+
+```
+>>> from faker import Faker
+>>> f = Faker()
+>>> f.file_path()
+'/break/Congress.json'
+```
+
+
 # Instructions for use
+
+## Run as Script
 
 `config.json` defines the work to be done:
 
@@ -59,6 +75,10 @@ e.g.:
   "include_all": false
 }
 ```
+
+## Use Classes
+
+To be added.
 
 # Adding Masks
 
