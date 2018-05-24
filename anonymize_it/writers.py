@@ -1,12 +1,14 @@
 from abc import abstractmethod, ABCMeta
 import json
+import uuid
+
 
 class BaseWriter(metaclass=ABCMeta):
     def __init__(self, params):
-        self.params = params
+        self.type = params.get('type')
 
     @abstractmethod
-    def write_data(self, data):
+    def write_data(self, data, file_name=None):
         pass
 
 
@@ -18,14 +20,17 @@ class ESWriter(BaseWriter):
 class FSWriter(BaseWriter):
     def __init__(self, params):
         super().__init__(params)
-        self.out_dir = self.params.get('directory')
+        self.type = 'filesystem'
+        self.out_dir = params.get('directory')
 
-    def write_data(self, data):
-        with open("{}/output.json".format(self.out_dir), 'w') as f:
+    def write_data(self, data, file_name=None):
+        if not file_name:
+            file_name = str(uuid.uuid4())
+        with open("{}/{}.json".format(self.out_dir, file_name), 'w') as f:
             json.dump(data, f)
 
 
-mapping = {
+writer_mapping = {
     "elasticsearch": ESWriter,
     "filesystem": FSWriter
 }

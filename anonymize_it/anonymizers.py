@@ -1,27 +1,34 @@
-from abc import ABCMeta, abstractmethod
 from faker import Faker
 import warnings
 import readers
 import writers
 import utils
 
-class ConfigParserError(Exception):
+
+class AnonymizerError(Exception):
     pass
+
 
 class ReaderError(Exception):
     pass
 
+
 class WriterError(Exception):
     pass
 
-class Anonymizer(metaclass=ABCMeta):
-    def __init__(self, config):
+
+class Anonymizer:
+    def __init__(self, reader=None, writer=None, field_maps={}):
         """a prepackaged anonymizer class
 
         an anonymizer is responsible for grabbing data from the source datastore,
         masking fields specified in a config, and writing data to a destination
 
-        :param config: a configuration dict
+        can be used by
+
+        :param reader: an instantiated reader
+        :param writer: an instantiated writer
+        :param field_maps: a dict like {'field.name': 'mapping_type'}
         """
         self.faker = Faker()
 
@@ -31,53 +38,28 @@ class Anonymizer(metaclass=ABCMeta):
             "ipv4": self.faker.ipv4
         }
 
-        self.config = config
+        self.field_maps = field_maps
+        self.reader = reader
+        self.writer = writer
+
         self.source = None
         self.dest = None
         self.masked_fields = None
         self.suppressed_fields = None
         self.reader_type = None
         self.writer_type = None
-        self.reader = None
-        self.writer = None
         self.include_rest = None
-        self.field_maps = {}
 
-        self.parse_config()
-        self.instantiate_reader()
-        self.instantiate_writer()
+        # only parse config if it exists
+        # this allows for anonymizer class instantiation via direct parameter setting
+        if not self.reader:
+            self.instantiate_reader()
+        if not self.writer:
+            self.instantiate_writer()
 
-        self.anonymize()
-
-    def parse_config(self):
-        """first pass parsing of config file
-
-        ensures that source and destination dicts exist, and sets types for reader and writer
-        """
-        self.source = self.config.get('source')
-        self.dest = self.config.get('dest')
-        self.masked_fields = self.config.get('include')
-        self.suppressed_fields = self.config.get('exclude')
-        self.include_rest = self.config.get('include_rest')
-
-        if not self.source:
-            raise ConfigParserError("source error: source not defined. Please check config.")
-        if not self.dest:
-            raise ConfigParserError("destination error: dest not defined. Please check config.")
-        if not self.masked_fields:
-            warnings.warn("no masked fields included in config. No data will be anonymized", Warning)
-
-        print("Masking Fields\n{}".format(self.masked_fields))
-        print("Suppressing Fields\n{}".format("\n".join(self.suppressed_fields)))
-
-        self.reader_type = self.source.get('type')
-        self.writer_type = self.dest.get('type')
-
-        if not self.reader_type:
-            raise ConfigParserError("source error: source type not defined. Please check config.")
-
-        if not self.writer_type:
-            raise ConfigParserError("destination error: dest type not defined. Please check config.")
+        # if used programmatically, an anonymizer must be instantiated with a reader and a writer
+        elif not all([self.reader, self.writer]):
+            raise AnonymizerError("Anonymizers must include both a reader and a writer")
 
     def instantiate_reader(self):
         source_params = self.source.get('params')
@@ -112,19 +94,20 @@ class Anonymizer(metaclass=ABCMeta):
         self.field_maps = self.reader.create_mappings()
         for field, map in self.field_maps.items():
             for value, _ in map.items():
-                mask_str = self.masked_fields[field]
+                mask_str = self.reader.masked_fields[field]
                 mask = self.provider_map[mask_str]
                 map[value] = mask()
 
-        # read data in data object
-        self.data = self.reader.get_data(list(self.field_maps.keys()), self.suppressed_fields, self.include_rest)
-        self.data = [utils.flatten(obj) for obj in self.data]
+        # get generator object from reader
+        data = self.reader.get_data(list(self.field_maps.keys()), self.suppressed_fields, self.include_rest)
 
-        # anonymize the values
-        for field, v in self.field_maps.items():
-            if v:
-                for event in self.data:
-                    event[field] = self.field_maps[field][event[field]]
-
-        # write
-        self.writer.write_data(self.data)
+        # batch process the data and write out to json in chunks
+        for batchiter in utils.batch(data, 10000):
+            tmp = []
+            for item in batchiter:
+                item = utils.flatten_nest(item.to_dict())
+                for field, v in self.field_maps.items():
+                    if v:
+                        item[field] = self.field_maps[field][item[field]]
+                        tmp.append(utils.flatten_nest(item))
+            self.writer.write_data(tmp)

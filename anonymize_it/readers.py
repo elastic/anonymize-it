@@ -9,7 +9,6 @@ class ESReaderError(Exception):
 
 class BaseReader():
     def __init__(self, params, masked_fields, suppressed_fields):
-        self.params = params
         self.masked_fields = masked_fields
         self.suppressed_fields = suppressed_fields
 
@@ -21,20 +20,20 @@ class BaseReader():
 class ESReader(BaseReader):
     def __init__(self, params, masked_fields, suppressed_fields):
         super().__init__(params, masked_fields, suppressed_fields)
-        self.host = self.params.get('host')
-        self.un = self.params.get('username')
-        self.pw = self.params.get('password')
-        self.index_pattern = self.params.get('index')
-        self.query = self.params.get('query')
+
+        # print(params)
+        self.type = 'elasticsearch'
+        self.host = params.get('host')
+        self.username = params.get('username')
+        self.password = params.get('password')
+        self.index_pattern = params.get('index')
+        self.query = params.get('query')
         self.es = None
 
-        if not all([self.host, self.un, self.pw]):
+        if not all([self.host, self.username, self.password]):
             raise ESReaderError("elasticsearch configuration malformed. please check config.")
 
-        self.create_connection()
-
-    def create_connection(self):
-        self.es = Elasticsearch([self.host], http_auth=(self.un, self.pw), verify_certs=False)
+        self.es = Elasticsearch([self.host], http_auth=(self.username, self.password), verify_certs=False)
 
     def create_mappings(self):
         mappings = {}
@@ -70,12 +69,7 @@ class ESReader(BaseReader):
             s = s.source(exclude=suppressed_fields)
 
         response = s.scan()
-        data = []
-        for hit in response:
-            data.append(hit.to_dict())
-
-        return data
-
+        return response
 
 
 class CSVReader(BaseReader):
@@ -93,7 +87,8 @@ class PandasReader(BaseReader):
     def get_data(self, field_maps, suppressed_fields, include_all):
         pass
 
-mapping = {
+
+reader_mapping = {
     "elasticsearch": ESReader,
     "csv": CSVReader,
     "pandas": PandasReader
