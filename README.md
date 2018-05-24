@@ -17,14 +17,31 @@ e.g.:
 
 # Instructions for use
 
+## Installation
+
+This must be run in a virtualenvironment with the correct dependencies installed. These are enumerated in `requirements.txt`
+
+### Install `virtualenv` globally:
+
+```
+[sudo] pip install virtualenv
+```
+
+Create a virtualenv and install the dependencies of `anonymize-it`
+```
+virtualenv -p python3 venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
 ## Run as Script
 
 ```
-python anonymize.py config.json
+python anonymize.py configs/config.json
 ```
 
 
-`config.json` defines the work to be done:
+`config.json` defines the work to be done, please see template file at `configs/config.json` for guidance:
 
 *  `source` defines the location of the original data to be anonymized along with the type of reader that should be invoked.
    *  `source.type`: a reader type. one of:
@@ -39,47 +56,15 @@ python anonymize.py config.json
          * `index`
 * `dest` defines the location where the data should be written back to
     * `dest.type` a writer type. one of:
-        * "json"
+        * "filesystem"
         * "csv' (TBD)
         * "elasticsearch" (TBD)
     * `dest.params`: parameters allowing for writing of data. specific to writer types
        * "json":
           * `directory` : directory to write json files
-          * `lines`: `{true|false}` type of json to write
-          * `chunked`: `{true|false}` one big file or many files
-* `masks`: the fields to mask along with the method for anonymization. This is a dict with entries like `{"field.name":"faker.provider.mask"}`. Please see faker documentation for providers [here](http://faker.readthedocs.io/en/master/providers.html).
+* `include`: the fields to mask along with the method for anonymization. This is a dict with entries like `{"field.name":"faker.provider.mask"}`. Please see faker documentation for providers [here](http://faker.readthedocs.io/en/master/providers.html).
 * `exclude`: specific fields to exclude
 * `include_rest`: `{true|false}` if true, all fields except excluded fields will be written. if false, only fields specified in `masks` will be written.
-
-e.g.:
-
-```json
-{
-  "source": {
-    "type": "elasticsearch",
-    "params": {
-      "host": "https://egergiuhewrgoiwehjgr239024t.us-west-1.aws.found.io:9243/",
-      "username": "elastic",
-      "password": "changeme",
-      "index": "apm-*"
-    }
-  },
-  "dest":{
-    "type": "filesystem",
-    "params": {
-      "directory": "blaklaybul/anonymized/output/",
-      "lines": false,
-      "chunked": false
-    }
-  },
-  "masks": {
-    "context.request.url" : "url",
-    "docker.container.id": "ipv4"
-  },
-  "exclude": ["user.name"],
-  "include_all": false
-}
-```
 
 ## Use Classes
 
