@@ -1,6 +1,9 @@
 # test configuration files
 xx*
 
+# output directory
+output/ 
+
 # pycharm
 .idea
  
