@@ -34,7 +34,92 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+and run:
+
+```
+python anonymize.py configs/config.json
+```
+
+## Quick Start
+`anonymize.py` is reproduced below to walk through a simple anonymization pipeline.
+
+
+First load and parse the config file.
+ 
+```python
+config_file = sys.argv[1]
+config = read_config(config_file) # opens json file and stores as python dict
+config = utils.parse_config(config) # utility function for parsing configuration and setting variables
+```
+
+Then, create the reader as defined in the configuration. `reader_mapping` is used as a dispatcher that maps human reader reader types (e.g. elasticsearch) to reader classes (e.g. `ESReader()`).
+```python
+reader = reader_mapping[config.source['type']]
+reader = reader(config.source['params'], config.masked_fields, config.suppressed_fields)
+```
+
+Next, create the writer in the same way.
+```python
+writer = writer_mapping[config.dest['type']]
+writer = writer(config.dest['params'])
+```
+
+Finally, create an anonymizer by passing the reader and writer instances and run `anonymize()`.
+```python
+anon = Anonymizer(reader=reader, writer=writer)
+anon.anonymize()
+```
+
+### Creating your own anonymizer pipeline
+
+An anonymizer requires a `reader` and a `writer`. Currently, only an elasticsearch reader `readers.ESReader()` and a filesystem writer `writers.FSWriter()` are provided.
+
+#### `readers`
+Creating an instance of a reader requires the following:
+
+* a `source` object, which contains parameters about the source. Please note that each reader class requires a different set of parameters. Please consult docstrings for specific parameters. 
+* `masked_fields` which is a dictionary that contains field names that should be masked, along with the faker provider to be used for masking. e.g.: `{"user.name": "user_name", "user.email": "email"}`
+* `suppressed_fields` which is a list of fields that should not be included in anonymization.
+
+`masked_fields` is required on the reader since the reader is responsible for enumerating the distinct values for each field to be used as a lookup for masking values.
+
+`suppressed_fields` is required on the reader since we will explicitly exclude these from a search query.
+
+Readers must implement the following methods:
+
+* `create_mappings()`, which is responsible for generating a dictionary to be used by the anonymizer object. The dictionary is structured as so:
+    ```python
+    {
+      "field.1": {
+          "val1.1": None,
+          "val1.2": None,
+          ...,
+          "val1.n": None
+        },
+      "field.2": {
+          "val2.1": None,
+          "val2.2": None,
+          ...,
+          "val2.m": None
+        }
+    }
+    ``` 
+* `get_data()`, which is responsible for returning data from the source and passing it to the anonymizer.
+
+#### `writers`
+
+Creating an instance of a writer requires the following:
+
+*  A `dest` object, which contains parameters about the destination. Please note that each writer class requires a different set of parameters. Please consult docstrings for specific parameters.
+
+Writers must implement the following methods:
+
+* `write_data()`, which send anonymized data to the destination.
+
 ## Run as Script
+
+
+#### `anonymizers`
 
 ```
 python anonymize.py configs/config.json
