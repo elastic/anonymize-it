@@ -13,6 +13,10 @@ class BaseReader():
         self.suppressed_fields = suppressed_fields
 
     @abstractmethod
+    def create_mappings(self):
+        pass
+
+    @abstractmethod
     def get_data(self, field_maps, suppressed_fields, include_all):
         pass
 
