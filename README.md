@@ -136,8 +136,6 @@ python anonymize.py configs/config.json
    * `source.params`: parameters allowing for access of data. specific to the reader type.
       * "elasticsearch":
          * `host`
-         * `username`
-         * `password`
          * `index`
 * `dest` defines the location where the data should be written back to
     * `dest.type` a writer type. one of:
