@@ -1,6 +1,9 @@
 # test configuration files
 xx*
 
+# gen testing
+# gen_tests
+
 # output directory
 output/ 
 
