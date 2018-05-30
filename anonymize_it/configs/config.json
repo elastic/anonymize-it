@@ -3,8 +3,6 @@
     "type": "elasticsearch",
     "params": {
       "host": "host:port",
-      "username": "username",
-      "password": "password",
       "index": "you-index-pattern-*",
       "query": {
         "match": {

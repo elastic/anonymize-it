@@ -1,13 +1,14 @@
 from abc import ABCMeta, abstractmethod
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, A
+import getpass
 
 
 class ESReaderError(Exception):
     pass
 
 
-class BaseReader():
+class BaseReader:
     def __init__(self, params, masked_fields, suppressed_fields):
         self.masked_fields = masked_fields
         self.suppressed_fields = suppressed_fields
@@ -25,11 +26,10 @@ class ESReader(BaseReader):
     def __init__(self, params, masked_fields, suppressed_fields):
         super().__init__(params, masked_fields, suppressed_fields)
 
-        # print(params)
         self.type = 'elasticsearch'
+        self.username = getpass.getpass('elasticsearch username: ')
+        self.password = getpass.getpass('elasticsearch password: ')
         self.host = params.get('host')
-        self.username = params.get('username')
-        self.password = params.get('password')
         self.index_pattern = params.get('index')
         self.query = params.get('query')
         self.es = None
@@ -38,6 +38,7 @@ class ESReader(BaseReader):
             raise ESReaderError("elasticsearch configuration malformed. please check config.")
 
         self.es = Elasticsearch([self.host], http_auth=(self.username, self.password), verify_certs=False)
+
 
     def create_mappings(self):
         mappings = {}
