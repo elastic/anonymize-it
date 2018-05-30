@@ -22,12 +22,12 @@ def main(seed):
                 for i in range(n):
                     files.append(provider())
 
-                f.write("{},{},{},{},{}\n".format(
+                f.write("{},{},{},{},{: .4f}\n".format(
                     seed,
                     provider.__name__,
                     n,
                     len(list(set(files))),
-                    round(100*(len(list(set(files))))/n), 4)
+                    100*((len(list(set(files))))/n))
                 )
 
 
