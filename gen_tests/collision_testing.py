@@ -7,7 +7,7 @@ def main(seed):
     f = Faker()
     f.seed(seed)
     num = [10, 100, 1000, 10000, 100000, 1000000]
-    providers = [f.file_path, f.ipv4, f.phone_number]
+    providers = [f.file_path, f.ipv4, f.phone_number, f.credit_card_number]
     # generate fake files
 
     if not os.path.exists("collision_results.csv"):
