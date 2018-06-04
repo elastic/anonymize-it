@@ -83,20 +83,26 @@ class Anonymizer:
 
         self.writer = writer(dest_params)
 
-    def anonymize(self):
+    def anonymize(self, infer=False):
         """this is the core method for anonymizing data
 
         it utilizes specific reader and writer class methods to retrieve and store data. in the process
         we define mappings of unmasked values to masked values, and anonymize fields using self.faker
         """
 
-        # first, create masking maps that will be used for lookups when anonymizing data
+        # first, infer mappings based on indices and overwrite the config.
+        if infer:
+            self.reader.infer_providers()
+
+        # next, create masking maps that will be used for lookups when anonymizing data
         self.field_maps = self.reader.create_mappings()
+
         for field, map in self.field_maps.items():
             for value, _ in map.items():
                 mask_str = self.reader.masked_fields[field]
-                mask = self.provider_map[mask_str]
-                map[value] = mask()
+                if mask_str != 'infer':
+                    mask = self.provider_map[mask_str]
+                    map[value] = mask()
 
         # get generator object from reader
         data = self.reader.get_data(list(self.field_maps.keys()), self.suppressed_fields, self.include_rest)

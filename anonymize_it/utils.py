@@ -1,6 +1,7 @@
 import collections
 import warnings
 from itertools import islice, chain
+import faker
 
 class ConfigParserError(Exception):
     pass
@@ -35,9 +36,6 @@ def parse_config(config):
     if not masked_fields:
         warnings.warn("no masked fields included in config. No data will be anonymized", Warning)
 
-    print("Masking Fields\n{}".format(masked_fields))
-    print("Suppressing Fields\n{}".format("\n".join(suppressed_fields)))
-
     reader_type = source.get('type')
     writer_type = dest.get('type')
 
@@ -57,3 +55,27 @@ def batch(iterable, size):
     while True:
         batchiter = islice(sourceiter, size)
         yield chain([next(batchiter)], batchiter)
+
+
+def faker_examples():
+    providers = []
+    examples = []
+    f = faker.Faker()
+    for provider in dir(faker.providers):
+        if provider[0].islower():
+            if provider == 'misc':
+                continue
+            try:
+                for fake in dir(getattr(faker.providers, provider).Provider):
+                    if fake[0].islower():
+                        for i in range(5):
+                            try:
+                                examples.append(str(getattr(f, fake)()))
+                                providers.append(fake)
+                            except Exception as e:
+                                print(e)
+                                continue
+            except:
+                continue
+    return providers, examples
+
