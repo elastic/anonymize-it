@@ -112,8 +112,8 @@ class Anonymizer:
             tmp = []
             for item in batchiter:
                 item = utils.flatten_nest(item.to_dict())
-                for field, v in self.field_maps.items():
-                    if v:
+                for field, v in item.items():
+                    if self.field_maps[field]:
                         item[field] = self.field_maps[field][item[field]]
-                        tmp.append(utils.flatten_nest(item))
+                tmp.append(utils.flatten_nest(item))
             self.writer.write_data(tmp)

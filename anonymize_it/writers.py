@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABCMeta
 import json
 import uuid
-
+import os
 
 class BaseWriter(metaclass=ABCMeta):
     def __init__(self, params):
