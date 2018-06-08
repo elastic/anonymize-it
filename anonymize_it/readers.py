@@ -97,15 +97,19 @@ class ESReader(BaseReader):
         for field, provider in self.masked_fields.items():
             logging.info("getting values for {} using provider {}".format(field, provider))
             mappings[field] = {}
+            cont = True
+            term = ""
+            size = 10000
             if provider:
-                s = Search(using=self.es, index=self.index_pattern)
-                if self.query:
-                    s.update_from_dict({"query": self.query})
-                a = A('terms', field=field, size=10000)
-                s.aggs.bucket('unique', a)
-                response = s.execute()
-                for val in response['aggregations']['unique']['buckets']:
-                    mappings[field][val['key']] = None
+                while cont:
+                    response = self.es.search(index=self.index_pattern,
+                                              body=utils.composite_query(field, size, self.query, term))
+                    for hit in response['aggregations']['my_buckets']['buckets']:
+                        mappings[field][hit['key'][field]] = None
+                    if len(response['aggregations']["my_buckets"]['buckets']) < size:
+                        cont = False
+                    term = response['aggregations']["my_buckets"]['buckets'][-1]['key'][field]
+
         logging.info("mappings completed...")
         return mappings
 
@@ -148,9 +152,6 @@ class ESReader(BaseReader):
                 self.masked_fields[field]['inferred'] = None
 
         print(self.masked_fields)
-
-
-
 
 
 class CSVReader(BaseReader):
