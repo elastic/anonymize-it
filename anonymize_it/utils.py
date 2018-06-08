@@ -1,6 +1,7 @@
 import collections
 import warnings
 from itertools import islice, chain
+import json
 import faker
 
 class ConfigParserError(Exception):
@@ -79,3 +80,22 @@ def faker_examples():
                 continue
     return providers, examples
 
+
+def composite_query(field, size, query=None, term=""):
+    body= {
+        "size": 0,
+        "aggs": {
+            "my_buckets": {
+                "composite": {
+                    "size": size,
+                    "sources" : [
+                        {field: {"terms": {"field": field}}}
+                    ],
+                    "after": {field: term}
+                }
+            }
+        }
+    }
+    if query:
+        body['query'] = query
+    return json.dumps(body)
