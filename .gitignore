@@ -10,7 +10,7 @@ output/
 # packages and dirs for .zips
 *.zip
 test_zip
-.DS_Store
+*.DS_Store
 
 # pycharm
 .idea
