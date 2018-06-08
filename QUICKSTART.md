@@ -23,7 +23,7 @@ Create a configuration with the following structure:
   "dest":{
     "type": "filesystem",
     "params": {
-      "directory": "output"
+      "directory": "absolute/path/to/output"
     }
   },
   "include": {
