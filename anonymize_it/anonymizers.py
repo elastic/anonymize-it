@@ -3,7 +3,8 @@ import warnings
 import readers
 import writers
 import utils
-
+import json
+import logging
 
 class AnonymizerError(Exception):
     pass
@@ -105,15 +106,27 @@ class Anonymizer:
                     map[value] = mask()
 
         # get generator object from reader
+        total = self.reader.get_count()
+        logging.info("total number of records {}...".format(total))
+
         data = self.reader.get_data(list(self.field_maps.keys()), self.suppressed_fields, self.include_rest)
 
         # batch process the data and write out to json in chunks
+        count = 0
         for batchiter in utils.batch(data, 10000):
             tmp = []
             for item in batchiter:
+                bulk = {
+                    "index": {
+                        "_index": item.meta['index']
+                    }
+                }
+                tmp.append(json.dumps(bulk))
                 item = utils.flatten_nest(item.to_dict())
                 for field, v in item.items():
                     if self.field_maps[field]:
                         item[field] = self.field_maps[field][item[field]]
-                tmp.append(utils.flatten_nest(item))
+                tmp.append(json.dumps(utils.flatten_nest(item)))
             self.writer.write_data(tmp)
+            count = count + 10000
+            logging.info("{} % complete...".format(count/total))

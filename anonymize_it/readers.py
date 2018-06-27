@@ -113,6 +113,12 @@ class ESReader(BaseReader):
         logging.info("mappings completed...")
         return mappings
 
+    def get_count(self):
+        s = Search(using=self.es, index=self.index_pattern)
+        if self.query:
+            s.update_from_dict({"query": self.query})
+        return s.count()
+
     def get_data(self, include, suppressed_fields, include_all=False):
         """
         :param field_maps:
