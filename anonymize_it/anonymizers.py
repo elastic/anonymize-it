@@ -118,7 +118,8 @@ class Anonymizer:
             for item in batchiter:
                 bulk = {
                     "index": {
-                        "_index": item.meta['index']
+                        "_index": item.meta['index'],
+                        "_type": 'doc'
                     }
                 }
                 tmp.append(json.dumps(bulk))
