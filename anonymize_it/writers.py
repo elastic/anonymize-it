@@ -3,7 +3,6 @@ import json
 import uuid
 import os
 
-from google.oauth2 import service_account
 from google.cloud import storage
 
 
