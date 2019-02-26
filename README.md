@@ -168,3 +168,9 @@ Readers can be added to `writers.py`, simply extend the base writer class and im
 # Notes
 
 https://stackoverflow.com/questions/17486578/how-can-you-bundle-all-your-python-code-into-a-single-zip-file
+
+# Running Tests
+
+To run the unit tests, 
+1. Create a virtual environment and install dependencies in `requirements.txt`
+2. Execute `py.test` from the top-level repository directory
