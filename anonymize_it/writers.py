@@ -30,7 +30,9 @@ class FSWriter(BaseWriter):
     def write_data(self, data, file_name=None):
         if not file_name:
             file_name = str(uuid.uuid4())
-        with open("{}/{}.json".format(self.out_dir, file_name), 'w') as f:
+        dir_path = os.path.join(os.path.abspath(os.getcwd()), self.out_dir)
+        os.makedirs(dir_path, exist_ok=True)
+        with open("{}/{}.json".format(dir_path, file_name), 'w') as f:
             f.write("\n".join(data))
 
 
