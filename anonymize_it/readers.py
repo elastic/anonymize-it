@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, A
 import getpass
-import utils
+from . import utils
 import logging
 
 

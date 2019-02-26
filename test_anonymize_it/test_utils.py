@@ -1,7 +1,7 @@
 from anonymize_it import utils
 
 
-def test_flatten():
+def test_flatten_nest():
     old = {
         "this": {
             "is": {
@@ -12,6 +12,6 @@ def test_flatten():
         }
     }
 
-    flattened = utils.flatten(old)
+    flattened = utils.flatten_nest(old)
     new = {"this.is.a.test": True}
     assert new == flattened
