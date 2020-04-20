@@ -49,7 +49,6 @@ class Anonymizer:
         self.suppressed_fields = None
         self.reader_type = None
         self.writer_type = None
-        self.include_rest = None
 
         # only parse config if it exists
         # this allows for anonymizer class instantiation via direct parameter setting
@@ -84,7 +83,7 @@ class Anonymizer:
 
         self.writer = writer(dest_params)
 
-    def anonymize(self, infer=False):
+    def anonymize(self, infer=False, include_rest=False):
         """this is the core method for anonymizing data
 
         it utilizes specific reader and writer class methods to retrieve and store data. in the process
@@ -109,7 +108,7 @@ class Anonymizer:
         total = self.reader.get_count()
         logging.info("total number of records {}...".format(total))
 
-        data = self.reader.get_data(list(self.field_maps.keys()), self.suppressed_fields, self.include_rest)
+        data = self.reader.get_data(list(self.field_maps.keys()), self.suppressed_fields, include_rest)
 
         # batch process the data and write out to json in chunks
         count = 0

@@ -46,8 +46,8 @@ def parse_config(config):
     if not writer_type:
         raise ConfigParserError("destination error: dest type not defined. Please check config.")
 
-    Config = collections.namedtuple('Config', 'source dest masked_fields suppressed_fields')
-    config = Config(source, dest, masked_fields, suppressed_fields)
+    Config = collections.namedtuple('Config', 'source dest masked_fields suppressed_fields include_rest')
+    config = Config(source, dest, masked_fields, suppressed_fields, include_rest)
     return config
 
 
