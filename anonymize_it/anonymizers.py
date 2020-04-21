@@ -129,5 +129,5 @@ class Anonymizer:
                         item[field] = self.field_maps[field][item[field]]
                 tmp.append(json.dumps(utils.flatten_nest(item)))
             self.writer.write_data(tmp)
-            count = count + 10000
-            logging.info("{} % complete...".format(count/total))
+            count += len(tmp) / 2 # There is a bulk row for every document
+            logging.info("{} % complete...".format(count/total * 100))
