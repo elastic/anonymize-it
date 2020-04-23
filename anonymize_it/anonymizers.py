@@ -39,6 +39,10 @@ class Anonymizer:
             "ipv4": self.faker.ipv4
         }
 
+        self.high_cardinality_fields = {
+            "very_unique": [self.faker.file_path(10) for _ in range(10)]
+        }
+
         self.field_maps = field_maps
         self.reader = reader
         self.writer = writer
@@ -101,7 +105,7 @@ class Anonymizer:
         for field, map in self.field_maps.items():
             for value, _ in map.items():
                 mask_str = self.reader.masked_fields[field]
-                if mask_str != 'infer':
+                if mask_str != 'infer' and mask_str not in self.high_cardinality_fields:
                     mask = self.provider_map[mask_str]
                     map[value] = mask()
 
@@ -125,7 +129,9 @@ class Anonymizer:
                 tmp.append(json.dumps(bulk))
                 item = utils.flatten_nest(item.to_dict())
                 for field, v in item.items():
-                    if self.field_maps[field]:
+                    if self.high_cardinality_fields.get(field):
+                        item[field] = self.high_cardinality_fields[field][len(v) % len(self.high_cardinality_fields[field])]
+                    elif self.field_maps[field]:
                         item[field] = self.field_maps[field][item[field]]
                 tmp.append(json.dumps(utils.flatten_nest(item)))
             self.writer.write_data(tmp)
