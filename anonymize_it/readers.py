@@ -91,10 +91,13 @@ class ESReader(BaseReader):
         logging.info("elasticsearch index = {}".format(self.index_pattern))
         logging.info("using query = {}".format(self.query))
 
-    def create_mappings(self):
+    def create_mappings(self, high_cardinality_fields=None):
         logging.info("creating mappings...")
         mappings = {}
+        high_cardinality_fields = high_cardinality_fields or {}
         for field, provider in self.masked_fields.items():
+                if field in high_cardinality_fields.keys():
+                    continue
             logging.info("getting values for {} using provider {}".format(field, provider))
             mappings[field] = {}
             cont = True
@@ -187,4 +190,3 @@ reader_mapping = {
     "csv": CSVReader,
     "pandas": PandasReader
 }
-

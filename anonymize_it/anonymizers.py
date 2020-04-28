@@ -100,7 +100,7 @@ class Anonymizer:
             self.reader.infer_providers()
 
         # next, create masking maps that will be used for lookups when anonymizing data
-        self.field_maps = self.reader.create_mappings()
+        self.field_maps = self.reader.create_mappings(high_cardinality_fields=self.high_cardinality_fields)
 
         for field, map in self.field_maps.items():
             for value, _ in map.items():
