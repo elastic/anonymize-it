@@ -79,13 +79,14 @@ class ESReader(BaseReader):
         self.host = params.get('host')
         self.index_pattern = params.get('index')
         self.query = params.get('query')
+        self.use_ssl = params.get('use_ssl', False)
         self.es = None
 
 
         if not all([self.host, self.username, self.password]):
             raise ESReaderError("elasticsearch configuration malformed. please check config.")
 
-        self.es = Elasticsearch([self.host], http_auth=(self.username, self.password), verify_certs=False)
+        self.es = Elasticsearch([self.host], use_ssl=self.use_ssl, http_auth=(self.username, self.password), verify_certs=False)
 
         logging.info("elasticsearch host = {}".format(self.host))
         logging.info("elasticsearch index = {}".format(self.index_pattern))

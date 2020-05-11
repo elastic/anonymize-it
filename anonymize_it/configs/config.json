@@ -4,6 +4,7 @@
     "params": {
       "host": "host:port",
       "index": "you-index-pattern-*",
+      "use_ssl": false,
       "query": {
         "match": {
           "username": "blaklaybul"
