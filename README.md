@@ -14,6 +14,9 @@ e.g.:
 '/break/Congress.json'
 ```
 
+# Disclaimer
+
+`anonymize-it` is intended to serve as a tool to replace real data values with sensical artificial ones such that the semantics of the data are retained. It is not intended to be used for anonymization requirements of GDPR policies, but rather to aid pseudonymization efforts. There may also be some collisions in high cardinality datasets.
 
 # Instructions for use
 
