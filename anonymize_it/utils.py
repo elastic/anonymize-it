@@ -4,6 +4,14 @@ from itertools import islice, chain
 import json
 import faker
 
+try:
+    # Import ABC from collections.abc for Python 3.4+
+    from collections.abc import MutableMapping
+except ImportError:
+    # Fallback for Python 2
+    from collections import MutableMapping
+
+
 class ConfigParserError(Exception):
     pass
 
@@ -12,7 +20,7 @@ def flatten_nest(d, parent_key='', sep='.'):
     items = []
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
-        if isinstance(v, collections.MutableMapping):
+        if isinstance(v, MutableMapping):
             items.extend(flatten_nest(v, new_key, sep=sep).items())
         else:
             items.append((new_key, v))
