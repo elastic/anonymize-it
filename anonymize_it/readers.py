@@ -109,7 +109,8 @@ class ESReader(BaseReader):
                         mappings[field][hit['key'][field]] = None
                     if len(response['aggregations']["my_buckets"]['buckets']) < size:
                         cont = False
-                    term = response['aggregations']["my_buckets"]['buckets'][-1]['key'][field]
+                    if not len(response['aggregations']["my_buckets"]['buckets']) == 0:
+                        term = response['aggregations']["my_buckets"]['buckets'][-1]['key'][field]
 
         logging.info("mappings completed...")
         return mappings
