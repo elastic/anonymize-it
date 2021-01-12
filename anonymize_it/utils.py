@@ -98,12 +98,13 @@ def composite_query(field, size, query=None, term=""):
                     "size": size,
                     "sources" : [
                         {field: {"terms": {"field": field}}}
-                    ],
-                    "after": {field: term}
+                    ]
                 }
             }
         }
     }
+    if term:
+        body["aggs"]["my_buckets"]["composite"]["after"] = {field: term}
     if query:
         body['query'] = query
     return json.dumps(body)
