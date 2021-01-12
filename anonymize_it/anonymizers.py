@@ -39,6 +39,8 @@ class Anonymizer:
             "ipv4": self.faker.ipv4
         }
 
+        self.high_cardinality_fields = {}
+
         self.field_maps = field_maps
         self.reader = reader
         self.writer = writer
@@ -101,14 +103,15 @@ class Anonymizer:
             for value, _ in map.items():
                 mask_str = self.reader.masked_fields[field]
                 if mask_str != 'infer':
-                    mask = self.provider_map[mask_str]
-                    map[value] = mask()
+                    if mask_str not in self.high_cardinality_fields:
+                        mask = self.provider_map[mask_str]
+                        map[value] = mask()
 
         # get generator object from reader
         total = self.reader.get_count()
         logging.info("total number of records {}...".format(total))
 
-        data = self.reader.get_data(list(self.field_maps.keys()), self.suppressed_fields, include_rest)
+        data = self.reader.get_data(include_rest)
 
         # batch process the data and write out to json in chunks
         count = 0
@@ -121,12 +124,21 @@ class Anonymizer:
                         "_type": 'doc'
                     }
                 }
-                tmp.append(json.dumps(bulk))
+                #tmp.append(json.dumps(bulk))
                 item = utils.flatten_nest(item.to_dict())
                 for field, v in item.items():
-                    if self.field_maps[field]:
-                        item[field] = self.field_maps[field][item[field]]
+                    if self.high_cardinality_fields.get(field):
+                        item[field] = self.high_cardinality_fields[field][len(v) % len(self.high_cardinality_fields[field])]
+                    elif self.field_maps.get(field, None):
+                        if type(item[field]) == list:
+                            # Since this is a list we need to sub out every item
+                            item[field] = [self.field_maps[field].get(f, "This should not happen (list)!!!") for f in item[field]]
+                        else:
+                            item[field] = self.field_maps[field].get(item[field], "This should not happen!!!")
+                    # else:
+                    #     print("I found no data in the field maps - {}!!!!".format(field))
                 tmp.append(json.dumps(utils.flatten_nest(item)))
             self.writer.write_data(tmp)
-            count += len(tmp) / 2 # There is a bulk row for every document
+            count += len(tmp)
+            #count += len(tmp) / 2# There is a bulk row for every document
             logging.info("{} % complete...".format(count/total * 100))

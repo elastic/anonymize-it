@@ -109,7 +109,8 @@ class ESReader(BaseReader):
                         mappings[field][hit['key'][field]] = None
                     if len(response['aggregations']["my_buckets"]['buckets']) < size:
                         cont = False
-                    term = response['aggregations']["my_buckets"]['buckets'][-1]['key'][field]
+                    if not len(response['aggregations']["my_buckets"]['buckets']) == 0:
+                        term = response['aggregations']["my_buckets"]['buckets'][-1]['key'][field]
 
         logging.info("mappings completed...")
         return mappings
@@ -120,7 +121,7 @@ class ESReader(BaseReader):
             s.update_from_dict({"query": self.query})
         return s.count()
 
-    def get_data(self, include, suppressed_fields, include_all=False):
+    def get_data(self, include_all=False):
         """
         :param field_maps:
         :param suppressed_fields:
@@ -133,9 +134,9 @@ class ESReader(BaseReader):
             s.update_from_dict({"query": self.query})
 
         if not include_all:
-            s = s.source(include=include, exclude=suppressed_fields)
+            s = s.source(include=self.masked_fields, exclude=self.suppressed_fields)
         else:
-            s = s.source(exclude=suppressed_fields)
+            s = s.source(exclude=self.suppressed_fields)
 
         logging.info("gathering data from elasticsearch...")
 
