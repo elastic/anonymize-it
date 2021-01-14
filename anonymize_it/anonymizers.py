@@ -169,7 +169,7 @@ class Anonymizer:
                         if type(item[field]) == list:
                             item[field] = [re.sub(all_users_regex, r"\1", f) for f in item[field]]
                         else:
-                            item[field] = re.sub(all_users_regex, r"\1", item[field]
+                            item[field] = re.sub(all_users_regex, r"\1", item[field])
                 if not contains_keywords:
                     tmp.append(json.dumps(utils.flatten_nest(item)))
             self.writer.write_data(tmp)
