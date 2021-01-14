@@ -12,17 +12,18 @@
       }
     }
   },
-  "dest":{
+  "dest": {
     "type": "filesystem",
     "params": {
       "directory": "output"
     }
   },
   "include": {
-    "field.1" : "file_path",
+    "field.1": "file_path",
     "field.2": "ipv4",
     "@timestamp": null
   },
   "exclude": [],
+  "sensitive": [],
   "include_rest": false
 }

@@ -3,9 +3,10 @@ import warnings
 import readers
 import writers
 import utils
+import re
 import json
 import logging
-
+import os
 class AnonymizerError(Exception):
     pass
 
@@ -38,9 +39,17 @@ class Anonymizer:
             "file_path": self.faker.file_path,
             "ipv4": self.faker.ipv4
         }
-
+        
+        # add high cardinality fields
         self.high_cardinality_fields = {}
 
+        # add user info regexes
+        self.user_regexes = {}
+
+        self.dir_path = os.path.abspath(os.path.dirname(__file__))
+        with open(os.path.join(self.dir_path, "secret_regexes.json"), "r") as f:
+            self.secret_regexes = json.load(f)
+        
         self.field_maps = field_maps
         self.reader = reader
         self.writer = writer
@@ -85,7 +94,7 @@ class Anonymizer:
 
         self.writer = writer(dest_params)
 
-    def anonymize(self, infer=False, include_rest=False):
+    def anonymize(self, sensitive_fields=[], infer=False, include_rest=False):
         """this is the core method for anonymizing data
 
         it utilizes specific reader and writer class methods to retrieve and store data. in the process
@@ -113,6 +122,12 @@ class Anonymizer:
 
         data = self.reader.get_data(include_rest)
 
+        for key in self.user_regexes:
+            self.user_regexes[key] = re.compile(self.user_regexes[key], flags=re.MULTILINE|re.IGNORECASE)
+
+        for key in self.secret_regexes:
+            self.secret_regexes[key] = re.compile(self.secret_regexes[key])
+
         # batch process the data and write out to json in chunks
         count = 0
         for batchiter in utils.batch(data, 10000):
@@ -126,17 +141,28 @@ class Anonymizer:
                 }
                 #tmp.append(json.dumps(bulk))
                 item = utils.flatten_nest(item.to_dict())
-                for field, v in item.items():
+                for field in list(item):
                     if self.high_cardinality_fields.get(field):
-                        item[field] = self.high_cardinality_fields[field][len(v) % len(self.high_cardinality_fields[field])]
+                        item[field] = self.high_cardinality_fields[field][len(item[field]) % len(self.high_cardinality_fields[field])]
                     elif self.field_maps.get(field, None):
                         if type(item[field]) == list:
                             # Since this is a list we need to sub out every item
                             item[field] = [self.field_maps[field].get(f, "This should not happen (list)!!!") for f in item[field]]
                         else:
                             item[field] = self.field_maps[field].get(item[field], "This should not happen!!!")
-                    # else:
-                    #     print("I found no data in the field maps - {}!!!!".format(field))
+
+                    if field in sensitive_fields:
+                        if utils.contains_secret(self.secret_regexes.values(), item[field]):
+                            del item[field]
+                            continue
+
+                        # Remove user information from fields
+                        for regex in self.user_regexes:
+                            if type(item[field]) == list:
+                                item[field] = [re.sub(self.user_regexes[regex], r"\1", f) for f in item[field]]
+                            else:
+                                item[field] = re.sub(self.user_regexes[regex], r"\1", item[field])
+
                 tmp.append(json.dumps(utils.flatten_nest(item)))
             self.writer.write_data(tmp)
             count += len(tmp)

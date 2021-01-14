@@ -37,6 +37,7 @@ def parse_config(config):
     masked_fields = config.get('include')
     suppressed_fields = config.get('exclude')
     include_rest = config.get('include_rest')
+    sensitive = config.get('sensitive')
 
     if not source:
         raise ConfigParserError("source error: source not defined. Please check config.")
@@ -54,8 +55,8 @@ def parse_config(config):
     if not writer_type:
         raise ConfigParserError("destination error: dest type not defined. Please check config.")
 
-    Config = collections.namedtuple('Config', 'source dest masked_fields suppressed_fields include_rest')
-    config = Config(source, dest, masked_fields, suppressed_fields, include_rest)
+    Config = collections.namedtuple('Config', 'source dest masked_fields suppressed_fields include_rest sensitive')
+    config = Config(source, dest, masked_fields, suppressed_fields, include_rest, sensitive)
     return config
 
 
@@ -89,21 +90,31 @@ def faker_examples():
     return providers, examples
 
 
+def contains_secret(regexes, field_value):
+    if type(field_value) == list:
+        for f in field_value:
+            if any([regex.search(f) for regex in regexes]):
+                return True
+    elif any([regex.search(field_value) for regex in regexes]):
+            return True
+
+
 def composite_query(field, size, query=None, term=""):
     body= {
-        "size": 0,
-        "aggs": {
-            "my_buckets": {
-                "composite": {
-                    "size": size,
-                    "sources" : [
-                        {field: {"terms": {"field": field}}}
-                    ],
-                    "after": {field: term}
+            "size": 0,
+            "aggs": {
+                "my_buckets": {
+                    "composite": {
+                        "size": size,
+                        "sources" : [
+                            {field: {"terms": {"field": field}}}
+                        ]
+                    }
                 }
             }
         }
-    }
+    if term: 
+        body["aggs"]["my_buckets"]["composite"]["after"] = {field: term}
     if query:
         body['query'] = query
     return json.dumps(body)
