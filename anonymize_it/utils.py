@@ -123,7 +123,7 @@ def composite_query(field, size, query=None, term=""):
                 }
             }
         }
-    if term: 
+    if term:
         body["aggs"]["my_buckets"]["composite"]["after"] = {field: term}
     if query:
         body['query'] = query
