@@ -90,15 +90,25 @@ def faker_examples():
     return providers, examples
 
 
-def contains_secret(regexes, field_value):
+def contains_secret(regex, field_value):
     if type(field_value) == list:
         for f in field_value:
-            if any([regex.search(f) for regex in regexes]):
+            if regex.search(f):
                 return True
-    elif any([regex.search(field_value) for regex in regexes]):
-            return True
+    elif regex.search(field_value):
+        return True
 
+def contains_keywords(field_value,keywords):
+    if not keywords:
+        return False
+    if type(field_value) == list:
+        for word in keywords:
+            if any(word in f for f in field_value):
+                return True
+    elif any(word in field_value for word in keywords):
+        return True
 
+      
 def composite_query(field, size, query=None, term=""):
     body= {
             "size": 0,

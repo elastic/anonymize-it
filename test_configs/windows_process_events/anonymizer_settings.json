@@ -12,7 +12,13 @@
     },
     "high_cardinality_fields" = {},
     "user_regexes" = {
-        "regex_1": "(Users)\\\\([^\\\\]+)",
-        "regex_2": "(Users)\\/([^\\/]+)"
-    }
+        "user_dir_1": "(Users)\\\\([^\\\\]+)",
+        "user_dir_2": "(Users)\\/([^\\/]+)"
+    },
+    "keywords" = [
+        "wget",
+        "ssh",
+        "aws",
+        "curl"
+    ]
 }

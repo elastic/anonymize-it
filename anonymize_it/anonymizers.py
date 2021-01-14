@@ -46,6 +46,9 @@ class Anonymizer:
         # add user info regexes
         self.user_regexes = {}
 
+        # drop documents if they contain these keywords
+        self.keywords = []
+
         self.dir_path = os.path.abspath(os.path.dirname(__file__))
         with open(os.path.join(self.dir_path, "secret_regexes.json"), "r") as f:
             self.secret_regexes = json.load(f)
@@ -122,11 +125,9 @@ class Anonymizer:
 
         data = self.reader.get_data(include_rest)
 
-        for key in self.user_regexes:
-            self.user_regexes[key] = re.compile(self.user_regexes[key], flags=re.MULTILINE|re.IGNORECASE)
+        all_users_regex = re.compile('|'.join([regex for regex in self.user_regexes.values()]), flags=re.MULTILINE|re.IGNORECASE)
 
-        for key in self.secret_regexes:
-            self.secret_regexes[key] = re.compile(self.secret_regexes[key])
+        all_secrets_regex = re.compile('|'.join([regex for regex in self.secret_regexes.values()]))
 
         # batch process the data and write out to json in chunks
         count = 0
@@ -141,9 +142,10 @@ class Anonymizer:
                 }
                 #tmp.append(json.dumps(bulk))
                 item = utils.flatten_nest(item.to_dict())
+                contains_keywords = False
                 for field in list(item):
                     if self.high_cardinality_fields.get(field):
-                        item[field] = self.high_cardinality_fields[field][len(item[field]) % len(self.high_cardinality_fields[field])]
+                        item[field] = self.high_cardinality_fields[field][item[field] % len(self.high_cardinality_fields[field])]
                     elif self.field_maps.get(field, None):
                         if type(item[field]) == list:
                             # Since this is a list we need to sub out every item
@@ -152,18 +154,24 @@ class Anonymizer:
                             item[field] = self.field_maps[field].get(item[field], "This should not happen!!!")
 
                     if field in sensitive_fields:
-                        if utils.contains_secret(self.secret_regexes.values(), item[field]):
+                        if field in self.field_maps or field in self.high_cardinality_fields:
+                            raise AnonymizerError("Sensitive fields should not be anonymized using faker providers")
+                        
+                        # Don't proceed if any field contains keywords
+                        if utils.contains_keywords(item[field], self.keywords):
+                            contains_keywords = True
+                            break
+                        # Remove the field if it contains a secret
+                        if utils.contains_secret(all_secrets_regex, item[field]):
                             del item[field]
                             continue
-
                         # Remove user information from fields
-                        for regex in self.user_regexes:
-                            if type(item[field]) == list:
-                                item[field] = [re.sub(self.user_regexes[regex], r"\1", f) for f in item[field]]
-                            else:
-                                item[field] = re.sub(self.user_regexes[regex], r"\1", item[field])
-
-                tmp.append(json.dumps(utils.flatten_nest(item)))
+                        if type(item[field]) == list:
+                            item[field] = [re.sub(all_users_regex, r"\1", f) for f in item[field]]
+                        else:
+                            item[field] = re.sub(all_users_regex, r"\1", item[field]
+                if not contains_keywords:
+                    tmp.append(json.dumps(utils.flatten_nest(item)))
             self.writer.write_data(tmp)
             count += len(tmp)
             #count += len(tmp) / 2# There is a bulk row for every document

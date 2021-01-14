@@ -47,6 +47,7 @@
         "host.ip": "host.ip"
     },
     "exclude": [
+        "process.command_line",
         "process.parent.command_line",
         "endgame.sha256",
         "endgame.signature_status",
@@ -74,18 +75,17 @@
         "endgame.process_path",
         "endgame.md5",
         "host.name"
-    ],
-    "sensitive": [
+      ],
+      "sensitive": [
+        "process.name",
+        "process.parent.name",
+        "process.pe.original_file_name",
         "process.args",
         "process.parent.args",
         "process.executable",
         "process.parent.executable",
-        "process.command_line",
-        "process.parent.command_line",
-        "endgame.process_path",
-        "endgame.parent_process_path",
         "endgame.command_line",
         "endgame.parent.command_line"
-    ],
+      ],
     "include_rest": true
 }
