@@ -1,8 +1,8 @@
 from faker import Faker
 import warnings
-import readers
-import writers
-import utils
+from . import readers
+from . import writers
+from . import utils
 import re
 import json
 import logging
@@ -39,7 +39,7 @@ class Anonymizer:
             "file_path": self.faker.file_path,
             "ipv4": self.faker.ipv4
         }
-        
+
         # add high cardinality fields
         self.high_cardinality_fields = {}
 
@@ -52,7 +52,7 @@ class Anonymizer:
         self.dir_path = os.path.abspath(os.path.dirname(__file__))
         with open(os.path.join(self.dir_path, "secret_regexes.json"), "r") as f:
             self.secret_regexes = json.load(f)
-        
+
         self.field_maps = field_maps
         self.reader = reader
         self.writer = writer
@@ -156,7 +156,7 @@ class Anonymizer:
                     if field in sensitive_fields:
                         if field in self.field_maps or field in self.high_cardinality_fields:
                             raise AnonymizerError("Sensitive fields should not be anonymized using faker providers")
-                        
+
                         # Don't proceed if any field contains keywords
                         if utils.contains_keywords(item[field], self.keywords):
                             contains_keywords = True
