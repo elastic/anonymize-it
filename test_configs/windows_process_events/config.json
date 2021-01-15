@@ -3,7 +3,7 @@
         "type": "elasticsearch",
         "params": {
             "host": "host:port",
-            "index": "endgame-*",
+            "index": "your-index-pattern-*",
             "use_ssl": true,
             "query": {
                 "bool": {
