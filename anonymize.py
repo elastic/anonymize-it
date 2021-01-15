@@ -1,9 +1,9 @@
 import sys
 import json
-from anonymizers import Anonymizer
-from readers import reader_mapping
-from writers import writer_mapping
-import utils
+from anonymize_it.anonymizers import Anonymizer
+from anonymize_it.readers import reader_mapping
+from anonymize_it.writers import writer_mapping
+from anonymize_it import utils
 import logging
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     config_file = sys.argv[1]
     config = read_config(config_file)
     config = utils.parse_config(config)
-    
+
     for conf in config._fields:
         logging.info("{} = {}".format(conf, getattr(config, conf)))
 
