@@ -5,6 +5,7 @@
       "host": "host:port",
       "index": "you-index-pattern-*",
       "use_ssl": false,
+      "auth": "api",
       "query": {
         "match": {
           "username": "blaklaybul"
