@@ -145,9 +145,9 @@ class ESReader(BaseReader):
             s.update_from_dict({"query": self.query})
 
         if not include_all:
-            s = s.source(include=self.masked_fields, exclude=self.suppressed_fields)
+            s = s.source(include=self.masked_fields, excludes=self.suppressed_fields)
         else:
-            s = s.source(exclude=self.suppressed_fields)
+            s = s.source(excludes=self.suppressed_fields)
 
         logging.info("gathering data from elasticsearch...")
 
