@@ -2,7 +2,7 @@
     "source": {
         "type": "elasticsearch",
         "params": {
-            "host": "es.greysector.inf.elasticnet.co:443",
+            "host": "elasticsearch.server.co:443",
             "index": "endgame-*",
             "use_ssl": true,
             "query": {
