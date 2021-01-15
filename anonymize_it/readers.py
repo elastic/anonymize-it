@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, A
 import getpass
-from . import utils
+import utils
 import logging
 
 
@@ -74,19 +74,30 @@ class ESReader(BaseReader):
         super().__init__(params, masked_fields, suppressed_fields)
 
         self.type = 'elasticsearch'
-        self.username = getpass.getpass('elasticsearch username: ')
-        self.password = getpass.getpass('elasticsearch password: ')
         self.host = params.get('host')
         self.index_pattern = params.get('index')
         self.query = params.get('query')
         self.use_ssl = params.get('use_ssl', False)
+        self.auth = params.get('auth')
+
+        if self.auth == 'native':
+            self.username = getpass.getpass('elasticsearch username: ')
+            self.password = getpass.getpass('elasticsearch password: ')
+        else:
+            self.apiKey = getpass.getpass('elasticsearch ApiKey: ')
+
         self.es = None
 
+        if self.auth == 'native':
+            if not all([self.host, self.username, self.password]):
+                raise ESReaderError("elasticsearch configuration malformed. please check config.")
+        elif not all([self.host, self.apiKey]):
+                raise ESReaderError("elasticsearch configuration malformed. please check config.")
 
-        if not all([self.host, self.username, self.password]):
-            raise ESReaderError("elasticsearch configuration malformed. please check config.")
-
-        self.es = Elasticsearch([self.host], use_ssl=self.use_ssl, http_auth=(self.username, self.password), verify_certs=False)
+        if self.auth == 'native':
+            self.es = Elasticsearch([self.host], use_ssl=self.use_ssl, http_auth=(self.username, self.password), verify_certs=False)
+        else:
+            self.es = Elasticsearch([self.host], api_key=self.apiKey, use_ssl=self.use_ssl)
 
         logging.info("elasticsearch host = {}".format(self.host))
         logging.info("elasticsearch index = {}".format(self.index_pattern))
