@@ -37,6 +37,7 @@ def parse_config(config):
     masked_fields = config.get('include')
     suppressed_fields = config.get('exclude')
     include_rest = config.get('include_rest')
+    sensitive = config.get('sensitive')
 
     if not source:
         raise ConfigParserError("source error: source not defined. Please check config.")
@@ -54,8 +55,8 @@ def parse_config(config):
     if not writer_type:
         raise ConfigParserError("destination error: dest type not defined. Please check config.")
 
-    Config = collections.namedtuple('Config', 'source dest masked_fields suppressed_fields include_rest')
-    config = Config(source, dest, masked_fields, suppressed_fields, include_rest)
+    Config = collections.namedtuple('Config', 'source dest masked_fields suppressed_fields include_rest sensitive')
+    config = Config(source, dest, masked_fields, suppressed_fields, include_rest, sensitive)
     return config
 
 
@@ -89,20 +90,39 @@ def faker_examples():
     return providers, examples
 
 
+def contains_secret(regex, field_value):
+    if type(field_value) == list:
+        for f in field_value:
+            if regex.search(f):
+                return True
+    elif regex.search(field_value):
+        return True
+
+def contains_keywords(field_value,keywords):
+    if not keywords:
+        return False
+    if type(field_value) == list:
+        for word in keywords:
+            if any(word in f for f in field_value):
+                return True
+    elif any(word in field_value for word in keywords):
+        return True
+
+      
 def composite_query(field, size, query=None, term=""):
     body= {
-        "size": 0,
-        "aggs": {
-            "my_buckets": {
-                "composite": {
-                    "size": size,
-                    "sources" : [
-                        {field: {"terms": {"field": field}}}
-                    ]
+            "size": 0,
+            "aggs": {
+                "my_buckets": {
+                    "composite": {
+                        "size": size,
+                        "sources" : [
+                            {field: {"terms": {"field": field}}}
+                        ]
+                    }
                 }
             }
         }
-    }
     if term:
         body["aggs"]["my_buckets"]["composite"]["after"] = {field: term}
     if query:

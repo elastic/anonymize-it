@@ -14,7 +14,6 @@ def read_config(config_file):
         config = json.load(f)
     return config
 
-
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p ->', level=logging.INFO)
 
@@ -22,7 +21,7 @@ if __name__ == "__main__":
     config_file = sys.argv[1]
     config = read_config(config_file)
     config = utils.parse_config(config)
-
+    
     for conf in config._fields:
         logging.info("{} = {}".format(conf, getattr(config, conf)))
 
@@ -38,4 +37,4 @@ if __name__ == "__main__":
     anon = Anonymizer(reader=reader, writer=writer)
 
     logging.info("performing anonymization...")
-    anon.anonymize(infer=True, include_rest=config.include_rest)
+    anon.anonymize(sensitive_fields=config.sensitive, infer=True, include_rest=config.include_rest)

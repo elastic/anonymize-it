@@ -1,0 +1,91 @@
+{
+    "source": {
+        "type": "elasticsearch",
+        "params": {
+            "host": "es.greysector.inf.elasticnet.co:443",
+            "index": "endgame-*",
+            "use_ssl": true,
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "match": {
+                                "event.kind": "event"
+                            }
+                        },
+                        {
+                            "match": {
+                                "event.category": "process"
+                            }
+                        },
+                        {
+                            "range": {
+                                "@timestamp": {
+                                    "gte": "2020-12-09T01:30:00",
+                                    "lte": "2020-12-10T02:00:00"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "dest": {
+        "type": "filesystem",
+        "params": {
+            "directory": "/Users/apoorvajoshi/Downloads"
+        }
+    },
+    "include": {
+        "host.hostname": "host.hostname",
+        "labels.account_id": "labels.account_id",
+        "labels.endpoint_id": "labels.endpoint_id",
+        "observer.name": "observer.name",
+        "user.domain": "user.domain",
+        "user.name": "user.name",
+        "host.ip": "host.ip"
+    },
+    "exclude": [
+        "process.command_line",
+        "process.parent.command_line",
+        "endgame.sha256",
+        "endgame.signature_status",
+        "endgame.unique_ppid",
+        "endgame.unique_pid",
+        "endgame.opcode",
+        "endgame.serial_event_id",
+        "endgame.event_type_full",
+        "endgame.authentication_id",
+        "endgame.user_name",
+        "endgame.user_sid",
+        "endgame.ppid",
+        "endgame.pid",
+        "endgame.exit_code",
+        "endgame.signature_signer",
+        "endgame.timestamp_utc",
+        "endgame.user_domain",
+        "endgame.process_name",
+        "endgame.original_file_name",
+        "endgame.unix_timestamp",
+        "endgame.parent_process_path",
+        "endgame.timestamp",
+        "endgame.parent_process_name",
+        "endgame.sha1",
+        "endgame.process_path",
+        "endgame.md5",
+        "host.name"
+      ],
+      "sensitive": [
+        "process.name",
+        "process.parent.name",
+        "process.pe.original_file_name",
+        "process.args",
+        "process.parent.args",
+        "process.executable",
+        "process.parent.executable",
+        "endgame.command_line",
+        "endgame.parent.command_line"
+      ],
+    "include_rest": true
+}
