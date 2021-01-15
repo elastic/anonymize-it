@@ -2,7 +2,7 @@
     "source": {
         "type": "elasticsearch",
         "params": {
-            "host": "elasticsearch.server.co:443",
+            "host": "host:port",
             "index": "endgame-*",
             "use_ssl": true,
             "query": {
