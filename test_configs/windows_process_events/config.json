@@ -2,8 +2,8 @@
     "source": {
         "type": "elasticsearch",
         "params": {
-            "host": "es.greysector.inf.elasticnet.co:443",
-            "index": "endgame-*",
+            "host": "host:port",
+            "index": "your-index-pattern-*",
             "use_ssl": true,
             "query": {
                 "bool": {
