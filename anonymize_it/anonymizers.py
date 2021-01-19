@@ -33,6 +33,7 @@ class Anonymizer:
         :param field_maps: a dict like {'field.name': 'mapping_type'}
         """
         self.faker = Faker()
+        Faker.seed(0)
 
         # add provider mappings here. these should map strings from the config to Faker providers
         self.provider_map = {
