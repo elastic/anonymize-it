@@ -1,8 +1,20 @@
 # Quickstart Guide
 
-## Setup
+## Install
 
-Download `anonymize-it.zip` to a directory of your choice.
+Install the latest `anonymize-it` package with Python:
+
+```console
+$ python -m pip install --user git+https://github.com/elastic/anonymize-it
+```
+
+or if you need a specific version:
+
+```console
+$ python -m pip install --user git+https://github.com/elastic/anonymize-it@0.1.0
+```
+
+## Configure
 
 Create a configuration with the following structure:
 
@@ -47,10 +59,8 @@ Currently, `anonymize-it` only works with elasticsearch clusters as a source, an
 
 ## Running
 
-When your configuration is ready, `cd` to the directory where `anonymize-it.zip` is located. Then run:
-
 ```
-PYTHONPATH=anonymize-it.zip python anonymize.py path/to/config
+$ anonmyize-it path/to/config.json
 ```
 
 json files with anonymized data will be created in the directory specified by `dest.params.directory`.

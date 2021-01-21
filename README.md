@@ -24,28 +24,23 @@ e.g.:
 
 This must be run in a virtualenvironment with the correct dependencies installed. These are enumerated in `requirements.txt`
 
-### Install `virtualenv` globally:
+## Install
 
-```
-[sudo] pip install virtualenv
-```
+Install the latest `anonymize-it` package with Python:
 
-Create a virtualenv and install the dependencies of `anonymize-it`
-```
-virtualenv -p python3 venv
-source venv/bin/activate
-pip install -r requirements.txt
+```console
+$ python -m pip install --user git+https://github.com/elastic/anonymize-it
 ```
 
-and run:
+or if you need a specific version:
 
-```
-python anonymize.py configs/config.json
+```console
+$ python -m pip install --user git+https://github.com/elastic/anonymize-it@0.1.0
 ```
 
 ## Quick Start
-`anonymize.py` is reproduced below to walk through a simple anonymization pipeline.
 
+`anonymize.py` is reproduced below to walk through a simple anonymization pipeline.
 
 First load and parse the config file.
  
@@ -125,7 +120,7 @@ Writers must implement the following methods:
 #### `anonymizers`
 
 ```
-python anonymize.py configs/config.json
+$ anonymize-it configs/config.json
 ```
 
 
