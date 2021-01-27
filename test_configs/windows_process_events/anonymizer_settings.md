@@ -1,7 +1,7 @@
 - Values to be set in anonymizers.py
 - provider_map and high_cardinality_fields need to be set only if anonymization_type=faker
 
-provider_map = {<br/>
+- provider_map = {<br/>
     "host.hostname": self.faker.word,<br/>
     "host.ip": self.faker.ipv4,<br/>
     "labels.account_id": self.faker.ssn,<br/>
@@ -11,14 +11,14 @@ provider_map = {<br/>
     "user.name": self.faker.word<br/>
 }
 
-high_cardinality_fields = {}
+- high_cardinality_fields = {}
 
-user_regexes = {<br/>
+- user_regexes = {<br/>
     "user_dir_1": "(Users)\\\\([^\\\\]+)",<br/>
     "user_dir_2": "(Users)\\/([^\\/]+)"<br/>
 }
 
-keywords = [<br/>
+- keywords = [<br/>
     "wget",<br/>
     "ssh",<br/>
     "aws",<br/>
