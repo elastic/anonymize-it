@@ -1,5 +1,5 @@
-# Values to be set in anonymizers.py
-# provider_map and high_cardinality_fields need to be set only if anonymization_type=faker
+#### Values to be set in anonymizers.py
+#### provider_map and high_cardinality_fields need to be set only if anonymization_type=faker
 
 provider_map: {
     "host.hostname": self.faker.word,
