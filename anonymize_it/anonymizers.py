@@ -6,6 +6,7 @@ from . import utils
 import re
 import json
 import logging
+import getpass
 import os
 class AnonymizerError(Exception):
     pass
@@ -34,7 +35,7 @@ class Anonymizer:
         """
         self.faker = Faker()
 
-        # add provider mappings here. these should map strings from the config to Faker providers
+        # add provider mappings here if anonymization type= faker. These should map strings from the config to Faker providers
         self.provider_map = {
             "file_path": self.faker.file_path,
             "ipv4": self.faker.ipv4
@@ -44,10 +45,18 @@ class Anonymizer:
         self.high_cardinality_fields = {}
 
         # add user info regexes
-        self.user_regexes = {}
+        self.user_regexes = {
+            "user_dir_1": "(Users)\\\\([^\\\\]+)",
+            "user_dir_2": "(Users)\\/([^\\/]+)"
+        }
 
         # drop documents if they contain these keywords
-        self.keywords = []
+        self.keywords = [
+            "wget",
+            "ssh",
+            "aws",
+            "curl"
+        ]
 
         self.dir_path = os.path.abspath(os.path.dirname(__file__))
         with open(os.path.join(self.dir_path, "secret_regexes.json"), "r") as f:
@@ -97,27 +106,35 @@ class Anonymizer:
 
         self.writer = writer(dest_params)
 
-    def anonymize(self, sensitive_fields=[], infer=False, include_rest=False):
+    def anonymize(self, sensitive_fields=[], infer=False, include_rest=False, anonymization_type="faker"):
         """this is the core method for anonymizing data
 
         it utilizes specific reader and writer class methods to retrieve and store data. in the process
         we define mappings of unmasked values to masked values, and anonymize fields using self.faker
         """
 
-        # first, infer mappings based on indices and overwrite the config.
-        if infer:
-            self.reader.infer_providers()
+        # If anonymization type is faker
+        if anonymization_type == "faker":
+            # first, infer mappings based on indices and overwrite the config.
+            if infer:
+                self.reader.infer_providers()
 
-        # next, create masking maps that will be used for lookups when anonymizing data
-        self.field_maps = self.reader.create_mappings()
+            # next, create masking maps that will be used for lookups when anonymizing data
+            self.field_maps = self.reader.create_mappings()
 
-        for field, map in self.field_maps.items():
-            for value, _ in map.items():
-                mask_str = self.reader.masked_fields[field]
-                if mask_str != 'infer':
-                    if mask_str not in self.high_cardinality_fields:
-                        mask = self.provider_map[mask_str]
-                        map[value] = mask()
+            for field, map in self.field_maps.items():
+                for value, _ in map.items():
+                    mask_str = self.reader.masked_fields[field]
+                    if mask_str != 'infer':
+                        if mask_str not in self.high_cardinality_fields:
+                            mask = self.provider_map[mask_str]
+                            map[value] = mask()
+
+        elif anonymization_type == "hash":
+            self.hashkey = getpass.getpass("Enter key for hash-based anonymization:")
+        
+        else:
+            raise AnonymizerError("Invalid anonymization type. Choose faker/hash")
 
         # get generator object from reader
         total = self.reader.get_count()
@@ -144,19 +161,27 @@ class Anonymizer:
                 item = utils.flatten_nest(item.to_dict())
                 contains_keywords = False
                 for field in list(item):
-                    if self.high_cardinality_fields.get(field):
-                        item[field] = self.high_cardinality_fields[field][item[field] % len(self.high_cardinality_fields[field])]
-                    elif self.field_maps.get(field, None):
-                        if type(item[field]) == list:
-                            # Since this is a list we need to sub out every item
-                            item[field] = [self.field_maps[field].get(f, "This should not happen (list)!!!") for f in item[field]]
-                        else:
-                            item[field] = self.field_maps[field].get(item[field], "This should not happen!!!")
-
+                    #First anonymize fiedls based on anonymization type
+                    if anonymization_type == "faker":
+                        if self.high_cardinality_fields.get(field):
+                            item[field] = self.high_cardinality_fields[field][item[field] % len(self.high_cardinality_fields[field])]
+                        elif self.field_maps.get(field, None):
+                            if type(item[field]) == list:
+                                # Since this is a list we need to sub out every item
+                                item[field] = [self.field_maps[field].get(f, "This should not happen (list)!!!") for f in item[field]]
+                            else:
+                                item[field] = self.field_maps[field].get(item[field], "This should not happen!!!")
+                    else:
+                            if field in self.reader.masked_fields:
+                                if type(item[field]) == list:
+                                # Since this is a list we need to sub out every item
+                                    item[field] = [utils.hash_value(self.hashkey, f) for f in item[field]]
+                                else:
+                                    item[field] = utils.hash_value(self.hashkey, item[field])
+                    # Check sensitive fields for keywords and secrets
                     if field in sensitive_fields:
                         if field in self.field_maps or field in self.high_cardinality_fields:
                             raise AnonymizerError("Sensitive fields should not be anonymized using faker providers")
-
                         # Don't proceed if any field contains keywords
                         if utils.contains_keywords(item[field], self.keywords):
                             contains_keywords = True

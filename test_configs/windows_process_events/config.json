@@ -1,3 +1,4 @@
+# include is a list of fields when anonymization_type=hash
 {
     "source": {
         "type": "elasticsearch",
@@ -34,9 +35,10 @@
     "dest": {
         "type": "filesystem",
         "params": {
-            "directory": "/Users/apoorvajoshi/Downloads"
+            "directory": "your-output-directory"
         }
     },
+    "anonymization_type": "faker",
     "include": {
         "host.hostname": "host.hostname",
         "labels.account_id": "labels.account_id",
@@ -75,8 +77,8 @@
         "endgame.process_path",
         "endgame.md5",
         "host.name"
-      ],
-      "sensitive": [
+    ],
+    "sensitive": [
         "process.name",
         "process.parent.name",
         "process.pe.original_file_name",
@@ -86,6 +88,6 @@
         "process.parent.executable",
         "endgame.command_line",
         "endgame.parent.command_line"
-      ],
+    ],
     "include_rest": true
 }

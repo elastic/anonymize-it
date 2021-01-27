@@ -3,6 +3,7 @@ import warnings
 from itertools import islice, chain
 import json
 import faker
+import hashlib
 
 try:
     # Import ABC from collections.abc for Python 3.4+
@@ -34,6 +35,7 @@ def parse_config(config):
     """
     source = config.get('source')
     dest = config.get('dest')
+    anonymization_type = config.get('anonymization_type')
     masked_fields = config.get('include')
     suppressed_fields = config.get('exclude')
     include_rest = config.get('include_rest')
@@ -55,8 +57,8 @@ def parse_config(config):
     if not writer_type:
         raise ConfigParserError("destination error: dest type not defined. Please check config.")
 
-    Config = collections.namedtuple('Config', 'source dest masked_fields suppressed_fields include_rest sensitive')
-    config = Config(source, dest, masked_fields, suppressed_fields, include_rest, sensitive)
+    Config = collections.namedtuple('Config', 'source dest anonymization_type masked_fields suppressed_fields include_rest sensitive')
+    config = Config(source, dest, anonymization_type, masked_fields, suppressed_fields, include_rest, sensitive)
     return config
 
 
@@ -101,7 +103,7 @@ def contains_secret(regex, field_value):
     elif regex.search(field_value):
         return True
 
-def contains_keywords(field_value,keywords):
+def contains_keywords(field_value, keywords):
     if not keywords:
         return False
     if type(field_value) == list:
@@ -111,7 +113,9 @@ def contains_keywords(field_value,keywords):
     elif any(word in field_value for word in keywords):
         return True
 
-      
+def hash_value(hashkey, field_value):
+    return hashlib.sha256(f"{hashkey}:{field_value}".encode()).hexdigest()
+
 def composite_query(field, size, query=None, term=""):
     body= {
             "size": 0,
