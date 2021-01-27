@@ -35,7 +35,7 @@ class Anonymizer:
         """
         self.faker = Faker()
 
-        # add provider mappings here if anonymization type= faker. These should map strings from the config to Faker providers
+        # add provider mappings here if anonymization type=faker. These should map strings from the config to Faker providers
         self.provider_map = {
             "file_path": self.faker.file_path,
             "ipv4": self.faker.ipv4
@@ -45,18 +45,10 @@ class Anonymizer:
         self.high_cardinality_fields = {}
 
         # add user info regexes
-        self.user_regexes = {
-            "user_dir_1": "(Users)\\\\([^\\\\]+)",
-            "user_dir_2": "(Users)\\/([^\\/]+)"
-        }
+        self.user_regexes = {}
 
         # drop documents if they contain these keywords
-        self.keywords = [
-            "wget",
-            "ssh",
-            "aws",
-            "curl"
-        ]
+        self.keywords = []
 
         self.dir_path = os.path.abspath(os.path.dirname(__file__))
         with open(os.path.join(self.dir_path, "secret_regexes.json"), "r") as f:
