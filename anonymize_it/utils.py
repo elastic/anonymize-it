@@ -1,6 +1,7 @@
 import collections
 import warnings
 from itertools import islice, chain
+from elasticsearch.client import LicenseClient
 import json
 import faker
 import hashlib
