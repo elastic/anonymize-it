@@ -4,6 +4,7 @@ from itertools import islice, chain
 import json
 import faker
 import hashlib
+import requests
 
 try:
     # Import ABC from collections.abc for Python 3.4+
@@ -16,6 +17,11 @@ except ImportError:
 class ConfigParserError(Exception):
     pass
 
+class CloudAPIError(Exception):
+    pass
+
+class LicenseAPIError(Exception):
+    pass
 
 def flatten_nest(d, parent_key='', sep='.'):
     items = []
@@ -35,7 +41,7 @@ def parse_config(config):
     """
     source = config.get('source')
     dest = config.get('dest')
-    anonymization_type = config.get('anonymization_type')
+    anonymization_info = config.get('anonymization')
     masked_fields = config.get('include')
     suppressed_fields = config.get('exclude')
     include_rest = config.get('include_rest')
@@ -57,8 +63,8 @@ def parse_config(config):
     if not writer_type:
         raise ConfigParserError("destination error: dest type not defined. Please check config.")
 
-    Config = collections.namedtuple('Config', 'source dest anonymization_type masked_fields suppressed_fields include_rest sensitive')
-    config = Config(source, dest, anonymization_type, masked_fields, suppressed_fields, include_rest, sensitive)
+    Config = collections.namedtuple('Config', 'source dest anonymization_info masked_fields suppressed_fields include_rest sensitive')
+    config = Config(source, dest, anonymization_info, masked_fields, suppressed_fields, include_rest, sensitive)
     return config
 
 
@@ -94,6 +100,30 @@ def faker_examples():
                 continue
     return providers, examples
 
+def get_hashkey(api_key=None, es=None):
+    if api_key:
+        deployment_api_url = 'https://api.elastic-cloud.com/api/v1/deployments'
+        request = requests.get(deployment_api_url, headers={'Authorization': f'ApiKey {api_key}'})
+        if request.response_code != 200:
+            raise CloudAPIError("Deployment API Authentication failed")
+        deployments = json.loads(request.content)
+        if len(deployments['deployments']) == 0:
+            raise CloudAPIError("No deployments found")
+        else:
+            dep_id = deployments['deployments'][0]['id']
+            request = requests.get(f'{deployment_api_url}/{dep_id}', headers={'Authorization': f'ApiKey {api_key}'})
+            if request.response_code != 200:
+                raise CloudAPIError("Deployment API Authentication failed")
+            customer_id = json.loads(request.content).get('metadata', {}).get('owner_id', None)
+            if not customer_id:
+                raise CloudAPIError("Customer ID not found")
+            return customer_id
+    else:
+        es_licence = LicenseClient(es)
+        license_info = es_license.get().get('license', {}).get('issued_to', None)
+        if not license_info:
+            raise LicenseAPIError("License not found")
+        return license_info
 
 def contains_secret(regex, field_value):
     if type(field_value) == list:

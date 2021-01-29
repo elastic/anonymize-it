@@ -98,7 +98,7 @@ class Anonymizer:
 
         self.writer = writer(dest_params)
 
-    def anonymize(self, sensitive_fields=[], infer=False, include_rest=False, anonymization_type="faker"):
+    def anonymize(self, sensitive_fields=[], infer=False, include_rest=False, anonymization_info):
         """this is the core method for anonymizing data
 
         it utilizes specific reader and writer class methods to retrieve and store data. in the process
@@ -106,7 +106,7 @@ class Anonymizer:
         """
 
         # If anonymization type is faker
-        if anonymization_type == "faker":
+        if anonymization_info["type"] == "faker":
             # first, infer mappings based on indices and overwrite the config.
             if infer:
                 self.reader.infer_providers()
@@ -122,9 +122,16 @@ class Anonymizer:
                             mask = self.provider_map[mask_str]
                             map[value] = mask()
 
-        elif anonymization_type == "hash":
-            self.hashkey = getpass.getpass("Enter key for hash-based anonymization:")
-        
+        elif anonymization_info["type"] == "hash":
+            if anonymization_info["params"]["account"] == "cloud":
+                cloud_api_key = getpass.getpass('Elastic Console API Key: ')
+                self.hashkey = utils.get_hashkey(api_key=cloud_api_key)
+
+            elif anonymization_info["params"]["account"] == "on_prem":
+                self.hashkey = utils.get_hashkey(es=self.reader.es)
+
+            else:
+                raise AnonymizerError("Invalid account type. Choose cloud/on_prem")
         else:
             raise AnonymizerError("Invalid anonymization type. Choose faker/hash")
 

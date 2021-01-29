@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from elasticsearch import Elasticsearch
+from elasticsearch.client import LicenseClient
 from elasticsearch_dsl import Search, A
 import getpass
 from . import utils

@@ -38,7 +38,12 @@
             "directory": "your-output-directory"
         }
     },
-    "anonymization_type": "faker",
+    "anonymization": {
+        "type": "hash",
+        "params": {
+            "account": "cloud"
+        }
+    },
     "include": {
         "host.hostname": "host.hostname",
         "labels.account_id": "labels.account_id",
