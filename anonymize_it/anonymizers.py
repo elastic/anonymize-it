@@ -141,8 +141,6 @@ class Anonymizer:
 
         data = self.reader.get_data(include_rest)
 
-        all_users_regex = re.compile('|'.join([regex for regex in self.user_regexes.values()]), flags=re.MULTILINE|re.IGNORECASE)
-
         all_secrets_regex = re.compile('|'.join([regex for regex in self.secret_regexes.values()]))
 
         # batch process the data and write out to json in chunks
@@ -190,12 +188,16 @@ class Anonymizer:
                             del item[field]
                             continue
                         # Remove user information from fields
-                        if type(item[field]) == list:
-                            item[field] = [re.sub(all_users_regex, r"\1", f) for f in item[field]]
-                        else:
-                            item[field] = re.sub(all_users_regex, r"\1", item[field])
+                        if self.user_regexes:
+                            all_users_regex = re.compile('|'.join([regex for regex in self.user_regexes.values()]), flags=re.MULTILINE|re.IGNORECASE)
+                            if type(item[field]) == list:
+                                item[field] = [re.sub(all_users_regex, r"\1", f) for f in item[field]]
+                            else:
+                                item[field] = re.sub(all_users_regex, r"\1", item[field])
+                                
                 if not contains_keywords:
                     tmp.append(json.dumps(utils.flatten_nest(item)))
+                    
             self.writer.write_data(tmp)
             count += len(tmp)
             #count += len(tmp) / 2# There is a bulk row for every document
