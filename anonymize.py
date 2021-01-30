@@ -37,4 +37,4 @@ if __name__ == "__main__":
     anon = Anonymizer(reader=reader, writer=writer)
 
     logging.info("performing anonymization...")
-    anon.anonymize(sensitive_fields=config.sensitive, infer=True, include_rest=config.include_rest, anonymization_info=config.anonymization)
+    anon.anonymize(anonymization_info=config.anonymization_info, sensitive_fields=config.sensitive, infer=True, include_rest=config.include_rest)
