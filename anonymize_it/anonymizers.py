@@ -98,7 +98,7 @@ class Anonymizer:
 
         self.writer = writer(dest_params)
 
-    def anonymize(self, sensitive_fields=[], infer=False, include_rest=False, anonymization_info):
+    def anonymize(self, anonymization_info, sensitive_fields=[], infer=False, include_rest=False,):
         """this is the core method for anonymizing data
 
         it utilizes specific reader and writer class methods to retrieve and store data. in the process
@@ -161,7 +161,7 @@ class Anonymizer:
                 contains_keywords = False
                 for field in list(item):
                     #First anonymize fiedls based on anonymization type
-                    if anonymization_type == "faker":
+                    if anonymization_info["type"] == "faker":
                         if self.high_cardinality_fields.get(field):
                             item[field] = self.high_cardinality_fields[field][item[field] % len(self.high_cardinality_fields[field])]
                         elif self.field_maps.get(field, None):
