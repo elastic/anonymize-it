@@ -123,7 +123,7 @@ def get_hashkey(es):
                 raise CloudAPIError("Customer ID not found")
             return customer_id
     else:
-        # For non-production clusters, the customer name is returned as "Company XYZ (non-production environments)
+        # For non-production clusters, the customer name is returned as "Company XYZ (non-production environments)"
         return license_info.split('(')[0].strip()
 
 def contains_secret(regex, field_value):
