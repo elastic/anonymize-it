@@ -38,12 +38,7 @@
             "directory": "your-output-directory"
         }
     },
-    "anonymization": {
-        "type": "hash",
-        "params": {
-            "account": "cloud"
-        }
-    },
+    "anonymization": "hash",
     "include": {
         "host.hostname": "host.hostname",
         "labels.account_id": "labels.account_id",

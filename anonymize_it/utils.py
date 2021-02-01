@@ -13,15 +13,9 @@ try:
 except ImportError:
     # Fallback for Python 2
     from collections import MutableMapping
-
-
 class ConfigParserError(Exception):
     pass
-
 class CloudAPIError(Exception):
-    pass
-
-class LicenseAPIError(Exception):
     pass
 
 def flatten_nest(d, parent_key='', sep='.'):
@@ -34,7 +28,6 @@ def flatten_nest(d, parent_key='', sep='.'):
             items.append((new_key, v))
     return dict(items)
 
-
 def parse_config(config):
     """first pass parsing of config file
 
@@ -42,7 +35,7 @@ def parse_config(config):
     """
     source = config.get('source')
     dest = config.get('dest')
-    anonymization_info = config.get('anonymization')
+    anonymization_type = config.get('anonymization')
     masked_fields = config.get('include')
     suppressed_fields = config.get('exclude')
     include_rest = config.get('include_rest')
@@ -64,10 +57,9 @@ def parse_config(config):
     if not writer_type:
         raise ConfigParserError("destination error: dest type not defined. Please check config.")
 
-    Config = collections.namedtuple('Config', 'source dest anonymization_info masked_fields suppressed_fields include_rest sensitive')
-    config = Config(source, dest, anonymization_info, masked_fields, suppressed_fields, include_rest, sensitive)
+    Config = collections.namedtuple('Config', 'source dest anonymization_type masked_fields suppressed_fields include_rest sensitive')
+    config = Config(source, dest, anonymization_type, masked_fields, suppressed_fields, include_rest, sensitive)
     return config
-
 
 def batch(iterable, size):
     sourceiter = iter(iterable)
@@ -77,7 +69,6 @@ def batch(iterable, size):
             yield chain([next(batchiter)], batchiter)
         except StopIteration:
             return
-
 
 def faker_examples():
     providers = []
@@ -101,8 +92,18 @@ def faker_examples():
                 continue
     return providers, examples
 
-def get_hashkey(api_key=None, es=None):
-    if api_key:
+def get_license_info(es):
+    es_license = LicenseClient(es)
+    license_info = es_license.get().get('license', {}).get('issued_to', None)
+    if not license_info:
+        return
+    return license_info
+
+def get_hashkey(es):
+    license_info = get_license_info(es)
+    if not license_info:
+        return
+    elif license_info == "Elastic Cloud":
         deployment_api_url = 'https://api.elastic-cloud.com/api/v1/deployments'
         request = requests.get(deployment_api_url, headers={'Authorization': f'ApiKey {api_key}'})
         if request.response_code != 200:
@@ -120,10 +121,6 @@ def get_hashkey(api_key=None, es=None):
                 raise CloudAPIError("Customer ID not found")
             return customer_id
     else:
-        es_licence = LicenseClient(es)
-        license_info = es_license.get().get('license', {}).get('issued_to', None)
-        if not license_info:
-            raise LicenseAPIError("License not found")
         return license_info
 
 def contains_secret(regex, field_value):
@@ -133,6 +130,7 @@ def contains_secret(regex, field_value):
                 return True
     elif regex.search(field_value):
         return True
+
 
 def contains_keywords(field_value, keywords):
     if not keywords:
