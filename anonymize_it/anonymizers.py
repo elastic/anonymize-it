@@ -6,7 +6,6 @@ from . import utils
 import re
 import json
 import logging
-import getpass
 import os
 class AnonymizerError(Exception):
     pass

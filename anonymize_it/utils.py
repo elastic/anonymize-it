@@ -5,6 +5,7 @@ from elasticsearch.client import LicenseClient
 import json
 import faker
 import hashlib
+import getpass
 import requests
 
 try:
@@ -104,6 +105,7 @@ def get_hashkey(es):
     if not license_info:
         return
     elif license_info == "Elastic Cloud":
+        api_key = getpass.getpass('Elastic Cloud Console API Key: ')
         deployment_api_url = 'https://api.elastic-cloud.com/api/v1/deployments'
         request = requests.get(deployment_api_url, headers={'Authorization': f'ApiKey {api_key}'})
         if request.response_code != 200:
