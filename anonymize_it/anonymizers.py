@@ -124,7 +124,7 @@ class Anonymizer:
         elif anonymization_type == "hash":
             self.hashkey = utils.get_hashkey(es=self.reader.es)
             if not self.hashkey:
-                raise AnonymizerErrro("Could not find valid hashkey")
+                raise AnonymizerError("Could not find valid hashkey")
         else:
             raise AnonymizerError("Invalid anonymization type. Choose faker/hash")
 

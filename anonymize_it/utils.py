@@ -108,7 +108,7 @@ def get_hashkey(es):
         api_key = getpass.getpass('Elastic Cloud Console API Key: ')
         deployment_api_url = 'https://api.elastic-cloud.com/api/v1/deployments'
         request = requests.get(deployment_api_url, headers={'Authorization': f'ApiKey {api_key}'})
-        if request.response_code != 200:
+        if request.status_code != 200:
             raise CloudAPIError("Deployment API Authentication failed")
         deployments = json.loads(request.content)
         if len(deployments['deployments']) == 0:
@@ -116,7 +116,7 @@ def get_hashkey(es):
         else:
             dep_id = deployments['deployments'][0]['id']
             request = requests.get(f'{deployment_api_url}/{dep_id}', headers={'Authorization': f'ApiKey {api_key}'})
-            if request.response_code != 200:
+            if request.status_code != 200:
                 raise CloudAPIError("Deployment API Authentication failed")
             customer_id = json.loads(request.content).get('metadata', {}).get('owner_id', None)
             if not customer_id:
