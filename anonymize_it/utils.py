@@ -1,8 +1,12 @@
 import collections
 import warnings
 from itertools import islice, chain
+from elasticsearch.client import LicenseClient
 import json
 import faker
+import hashlib
+import getpass
+import requests
 
 try:
     # Import ABC from collections.abc for Python 3.4+
@@ -10,11 +14,10 @@ try:
 except ImportError:
     # Fallback for Python 2
     from collections import MutableMapping
-
-
 class ConfigParserError(Exception):
     pass
-
+class CloudAPIError(Exception):
+    pass
 
 def flatten_nest(d, parent_key='', sep='.'):
     items = []
@@ -26,7 +29,6 @@ def flatten_nest(d, parent_key='', sep='.'):
             items.append((new_key, v))
     return dict(items)
 
-
 def parse_config(config):
     """first pass parsing of config file
 
@@ -34,6 +36,7 @@ def parse_config(config):
     """
     source = config.get('source')
     dest = config.get('dest')
+    anonymization_type = config.get('anonymization')
     masked_fields = config.get('include')
     suppressed_fields = config.get('exclude')
     include_rest = config.get('include_rest')
@@ -55,10 +58,9 @@ def parse_config(config):
     if not writer_type:
         raise ConfigParserError("destination error: dest type not defined. Please check config.")
 
-    Config = collections.namedtuple('Config', 'source dest masked_fields suppressed_fields include_rest sensitive')
-    config = Config(source, dest, masked_fields, suppressed_fields, include_rest, sensitive)
+    Config = collections.namedtuple('Config', 'source dest anonymization_type masked_fields suppressed_fields include_rest sensitive')
+    config = Config(source, dest, anonymization_type, masked_fields, suppressed_fields, include_rest, sensitive)
     return config
-
 
 def batch(iterable, size):
     sourceiter = iter(iterable)
@@ -68,7 +70,6 @@ def batch(iterable, size):
             yield chain([next(batchiter)], batchiter)
         except StopIteration:
             return
-
 
 def faker_examples():
     providers = []
@@ -92,6 +93,38 @@ def faker_examples():
                 continue
     return providers, examples
 
+def get_license_info(es):
+    es_license = LicenseClient(es)
+    license_info = es_license.get().get('license', {}).get('issued_to', None)
+    if not license_info:
+        return
+    return license_info
+
+def get_hashkey(es):
+    license_info = get_license_info(es)
+    if not license_info:
+        return
+    elif license_info == "Elastic Cloud":
+        api_key = getpass.getpass('Elastic Cloud Console API Key: ')
+        deployment_api_url = 'https://api.elastic-cloud.com/api/v1/deployments'
+        request = requests.get(deployment_api_url, headers={'Authorization': f'ApiKey {api_key}'})
+        if request.status_code != 200:
+            raise CloudAPIError("Deployment API Authentication failed")
+        deployments = json.loads(request.content)
+        if len(deployments['deployments']) == 0:
+            raise CloudAPIError("No deployments found")
+        else:
+            dep_id = deployments['deployments'][0]['id']
+            request = requests.get(f'{deployment_api_url}/{dep_id}', headers={'Authorization': f'ApiKey {api_key}'})
+            if request.status_code != 200:
+                raise CloudAPIError("Deployment API Authentication failed")
+            customer_id = json.loads(request.content).get('metadata', {}).get('owner_id', None)
+            if not customer_id:
+                raise CloudAPIError("Customer ID not found")
+            return customer_id
+    else:
+        # For non-production clusters, the customer name is returned as "Company XYZ (non-production environments)"
+        return license_info.split('(')[0].strip()
 
 def contains_secret(regex, field_value):
     if type(field_value) == list:
@@ -101,7 +134,8 @@ def contains_secret(regex, field_value):
     elif regex.search(field_value):
         return True
 
-def contains_keywords(field_value,keywords):
+
+def contains_keywords(field_value, keywords):
     if not keywords:
         return False
     if type(field_value) == list:
@@ -111,7 +145,9 @@ def contains_keywords(field_value,keywords):
     elif any(word in field_value for word in keywords):
         return True
 
-      
+def hash_value(hashkey, field_value):
+    return hashlib.sha256(f"{hashkey}:{field_value}".encode()).hexdigest()
+
 def composite_query(field, size, query=None, term=""):
     body= {
             "size": 0,

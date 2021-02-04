@@ -19,6 +19,7 @@
       "directory": "output"
     }
   },
+  "anonymization": "faker",
   "include": {
     "field.1": "file_path",
     "field.2": "ipv4",
