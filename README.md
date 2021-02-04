@@ -162,10 +162,9 @@ For hash-based anonymization, this can be a list of fields to be masked like `["
 * `sensitive`: included fields (apart from the masked fields) that should be searched for sensitive information like secrets
 * `include_rest`: `{true|false}` if true, all fields except excluded fields will be written. if false, only fields specified in `masks` will be written.
 
-# Important notes for hash-based anonymization
+#### Important notes for hash-based anonymization
 1) The user should have `monitor` privilege for the Elastic environment in which to run the anonymization.
-2) If you are a Cloud user and want to perform hash-based anonymization, you'll need to create an API key in the Elasticsearch Service Console and provide it as input when prompted. To create an API key, follow the instructions here:
-https://www.elastic.co/guide/en/cloud/current/ec-api-authentication.html
+2) If you are a Cloud user and want to perform hash-based anonymization, you'll need to create an API key in the Elasticsearch Service Console and provide it as input when prompted. To create an API key, follow the instructions [here](https://www.elastic.co/guide/en/cloud/current/ec-api-authentication.html).
 
 # Adding Masks
 
