@@ -1,11 +1,12 @@
 # anonymize-it
-a general utility for anonymizing data
+A general utility for anonymizing data
 
 `anonymize-it` can be run as a script that accepts a config file specifying the type source, anonymization mappings, and destination and an anonymizer pipeline. Individual pipeline components can also be imported into any python program that wishes to anonymize data. 
 
-Currently, the anonymization procedue relies on providers from [`Faker`](http://faker.readthedocs.io) to perform masking of fields.
+Currently, the `anonymize-it` supports two methods for anonymization: 
+1) Faker-based: Relies on providers from [`Faker`](http://faker.readthedocs.io) to perform masking of fields. This method is suitable for one-off anonymization usecases, where correlation between data obtained from different sources (indices/clusters) is not necessary.
 
-e.g.:
+E.g.:
 
 ```
 >>> from faker import Faker
@@ -13,10 +14,13 @@ e.g.:
 >>> f.file_path()
 '/break/Congress.json'
 ```
+2) Hash-based: Uses a unique user/customer ID as a salt to anonymize fields. This method is suitable when anonymization of data needs to be performed regularly and/or if correlation of data from different sources is crucial. 
+
+E.g.: A user wants to anonymize network events and process events stored in two separate indices but wants to correlate all activity for a particular host even after anonymization
 
 # Disclaimer
 
-`anonymize-it` is intended to serve as a tool to replace real data values with sensical artificial ones such that the semantics of the data are retained. It is not intended to be used for anonymization requirements of GDPR policies, but rather to aid pseudonymization efforts. There may also be some collisions in high cardinality datasets.
+`anonymize-it` is intended to serve as a tool to replace real data values with sensical artificial ones such that the semantics of the data are retained. It is not intended to be used for anonymization requirements of GDPR policies, but rather to aid pseudonymization efforts. There may also be some collisions in high cardinality datasets on using the Faker implementation.
 
 # Instructions for use
 
@@ -44,8 +48,8 @@ python anonymize.py configs/config.json
 ```
 
 ## Quick Start
-`anonymize.py` is reproduced below to walk through a simple anonymization pipeline.
 
+`anonymize.py` is reproduced below to walk through a simple anonymization pipeline.
 
 First load and parse the config file.
  
@@ -78,19 +82,21 @@ anon.anonymize()
 An anonymizer requires a `reader` and a `writer`. Currently, only an elasticsearch reader `readers.ESReader()` and a filesystem writer `writers.FSWriter()` are provided.
 
 #### `readers`
+
 Creating an instance of a reader requires the following:
 
 * a `source` object, which contains parameters about the source. Please note that each reader class requires a different set of parameters. Please consult docstrings for specific parameters. 
-* `masked_fields` which is a dictionary that contains field names that should be masked, along with the faker provider to be used for masking. e.g.: `{"user.name": "user_name", "user.email": "email"}`
-* `suppressed_fields` which is a list of fields that should not be included in anonymization.
+* `masked_fields` which is a dictionary that contains field names that should be masked, along with the faker provider to be used for masking, if using the Faker-base anonymization. e.g.: `{"user.name": "user_name", "user.email": "email"}`
+If using the hash-based implementation, `masked_fields` is simply a list of field names to be masked. e.g.: `["user.name", "user.email"]`
+* `suppressed_fields` which is a list of fields that should NOT be included in anonymization.
 
-`masked_fields` is required on the reader since the reader is responsible for enumerating the distinct values for each field to be used as a lookup for masking values.
+`masked_fields` is required on the reader since the reader is responsible for enumerating the distinct values for each field to be used as a lookup for masking values in the faker-based anonymization.
 
 `suppressed_fields` is required on the reader since we will explicitly exclude these from a search query.
 
 Readers must implement the following methods:
-
-* `create_mappings()`, which is responsible for generating a dictionary to be used by the anonymizer object. The dictionary is structured as so:
+* `get_data()`, which is responsible for returning data from the source and passing it to the anonymizer.
+* (If using Faker-based anonymization), `create_mappings()`, which is responsible for generating a dictionary to be used by the anonymizer object. The dictionary is structured as so:
     ```python
     {
       "field.1": {
@@ -107,7 +113,7 @@ Readers must implement the following methods:
         }
     }
     ``` 
-* `get_data()`, which is responsible for returning data from the source and passing it to the anonymizer.
+where `field.1` and `field.2` are the fields to be anonymized and the `val1.1`, `val1.2` etc. are the distinct values for each field
 
 #### `writers`
 
@@ -128,7 +134,6 @@ Writers must implement the following methods:
 python anonymize.py configs/config.json
 ```
 
-
 `config.json` defines the work to be done, please see template file at `configs/config.json` for guidance:
 
 *  `source` defines the location of the original data to be anonymized along with the type of reader that should be invoked.
@@ -140,6 +145,8 @@ python anonymize.py configs/config.json
       * "elasticsearch":
          * `host`
          * `index`
+         * `use_ssl`
+         * `auth` (`native` optional)
 * `dest` defines the location where the data should be written back to
     * `dest.type` a writer type. one of:
         * "filesystem"
@@ -147,29 +154,32 @@ python anonymize.py configs/config.json
         * "elasticsearch" (TBD)
     * `dest.params`: parameters allowing for writing of data. specific to writer types
        * "json":
-          * `directory` : directory to write json files
-* `include`: the fields to mask along with the method for anonymization. This is a dict with entries like `{"field.name":"faker.provider.mask"}`. Please see faker documentation for providers [here](http://faker.readthedocs.io/en/master/providers.html).
+          * `directory` : directory to write output json files
+* `anonymization`: type of anonymization i.e. `faker` or `hash`
+* `include`: the fields to mask along with the method for anonymization in case of faker-based anonymization. This is a dict with entries like `{"field.name":"faker.provider.mask"}`. Please see faker documentation for providers [here](http://faker.readthedocs.io/en/master/providers.html).
+For hash-based anonymization, this can be a list of fields to be masked like `["field.name"]`.
 * `exclude`: specific fields to exclude
+* `sensitive`: included fields (apart from the masked fields) that should be searched for sensitive information like secrets
 * `include_rest`: `{true|false}` if true, all fields except excluded fields will be written. if false, only fields specified in `masks` will be written.
 
-## Use Classes
-
-To be added.
+# Important notes for hash-based anonymization
+1) The user should have `monitor` privilege for the Elastic environment in which to run the anonymization.
+2) If you are a Cloud user and want to perform hash-based anonymization, you'll need to create an API key in the Elasticsearch Service Console and provide it as input when prompted. To create an API key, follow the instructions here:
+https://www.elastic.co/guide/en/cloud/current/ec-api-authentication.html
 
 # Adding Masks
 
-The anonymizer class only knows how to use providers that are enumerated in the `provider_map` class attribute. If you would like to add support for new faker providers, please add entries to this dict.
+For the faker-based anonymization, the anonymizer class only knows how to use providers that are enumerated in the `provider_map` class attribute. If you would like to add support for new faker providers, please add entries to this dict.
 
 # Adding Readers
 
-Readers can be added to `readers.py`, simply extend the base reader class and implement all abstract methods. Add a new entry to `mappings`
+Readers can be added to `readers.py`, simply extend the base reader class and implement all abstract methods. Add a new entry to `reader_mapping`
 
 # Adding Writers
 
-Readers can be added to `writers.py`, simply extend the base writer class and implement all abstract methods. Add a new entry to `mappings` 
+Readers can be added to `writers.py`, simply extend the base writer class and implement all abstract methods. Add a new entry to `reader_mapping` 
 
-# Notes
-
+# General Notes
 https://stackoverflow.com/questions/17486578/how-can-you-bundle-all-your-python-code-into-a-single-zip-file
 
 # Running Tests
