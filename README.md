@@ -172,7 +172,7 @@ For hash-based anonymization, this can be a list of fields to be masked like `["
 
 In addition to the above settings, for more fine-grained control over the anonymization, you can also set the following class attributes for `Anonymizer`:
 1) `user_regexes`, which is a dict with entries like `{"regex.name": "regex"}`. These regexes are used to redact PII (apart from secrets, which is already taken care of) from the `sensitive` fields
-2) `keywords`, which is a list like `["keyword1", "keyword2"]`. Documents containing any of the keywords are dropped.
+2) `keywords`, which is a list like `["keyword1", "keyword2"]`. Documents containing any of the keywords in any of the `sensitive` fields are dropped.
 
 # Adding Masks
 
