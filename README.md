@@ -86,7 +86,7 @@ An anonymizer requires a `reader` and a `writer`. Currently, only an elasticsear
 Creating an instance of a reader requires the following:
 
 * a `source` object, which contains parameters about the source. Please note that each reader class requires a different set of parameters. Please consult docstrings for specific parameters. 
-* `masked_fields` which is a dictionary that contains field names that should be masked, along with the faker provider to be used for masking, if using the Faker-base anonymization. e.g.: `{"user.name": "user_name", "user.email": "email"}`
+* `masked_fields` which is a dictionary that contains field names that should be masked, along with the faker provider to be used for masking, if using the Faker-based anonymization. e.g.: `{"user.name": "user_name", "user.email": "email"}`
 If using the hash-based implementation, `masked_fields` is simply a list of field names to be masked. e.g.: `["user.name", "user.email"]`
 * `suppressed_fields` which is a list of fields that should NOT be included in anonymization.
 
@@ -159,12 +159,20 @@ python anonymize.py configs/config.json
 * `include`: the fields to mask along with the method for anonymization in case of faker-based anonymization. This is a dict with entries like `{"field.name":"faker.provider.mask"}`. Please see faker documentation for providers [here](http://faker.readthedocs.io/en/master/providers.html).
 For hash-based anonymization, this can be a list of fields to be masked like `["field.name"]`.
 * `exclude`: specific fields to exclude
-* `sensitive`: included fields (apart from the masked fields) that should be searched for sensitive information like secrets
+* `sensitive`: included fields (apart from the masked fields) that should not be completely replaced by a faker/hash substitute, but should be searched for sensitive information
 * `include_rest`: `{true|false}` if true, all fields except excluded fields will be written. if false, only fields specified in `masks` will be written.
+
+### Important notes for Faker-based anonymization
+1) Set the `provider_map` class attribute for the `Anonymizer` class, which is a dict with entries like `{"field.name":self.faker.provider.mask}`. Refer `anonymizers.py` for a test configuration of `provider_map`.
+2) If the fields being anonymized have high cardinality, set the `high_cardinality_fields` class attribute for the `Anonymizer` class, which is a dict with entries like `{"field.name": [self.faker.provider.mask(10) for _ in range(10)]}`.
 
 ### Important notes for hash-based anonymization
 1) The user should have `monitor` privilege for the Elastic environment in which to run the anonymization.
 2) If you are a Cloud user and want to perform hash-based anonymization, you'll need to create an API key in the Elasticsearch Service Console and provide it as input when prompted. To create an API key, follow the instructions [here](https://www.elastic.co/guide/en/cloud/current/ec-api-authentication.html).
+
+In addition to the above settings, for more fine-grained control over the anonymization, you can also set the following class attributes for `Anonymizer`:
+1) `user_regexes`, which is a dict with entries like `{"regex.name": "regex"}`. These regexes are used to redact PII (apart from secrets, which is already taken care of) from the `sensitive` fields
+2) `keywords`, which is a list like `["keyword1", "keyword2"]`. Documents containing any of the keywords are dropped.
 
 # Adding Masks
 
