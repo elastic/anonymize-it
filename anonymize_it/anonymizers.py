@@ -154,7 +154,7 @@ class Anonymizer:
                     #First anonymize fiedls based on anonymization type
                     if anonymization_type == "faker":
                         if self.high_cardinality_fields.get(field):
-                            item[field] = self.high_cardinality_fields[field][item[field] % len(self.high_cardinality_fields[field])]
+                            item[field] = self.high_cardinality_fields[field][len(item[field]) % len(self.high_cardinality_fields[field])]
                         elif self.field_maps.get(field, None):
                             if type(item[field]) == list:
                                 # Since this is a list we need to sub out every item
