@@ -46,8 +46,8 @@
         "observer.name": "observer.name",
         "user.domain": "user.domain",
         "user.name": "user.name",
-        "endgame.subject_user_name": "endgame.subject_user_name",
-        "endgame.subject_domain_name": "endgame.subject_domain_name",
+        "user.effective.domain": "user.effective.domain",
+        "user.effective.name": "user.effective.name",
         "host.ip": "host.ip"
     },
     "exclude": [
@@ -91,7 +91,9 @@
         "endgame.ip_address",
         "endgame.event_data_process_path",
         "endgame.user_sid",
-        "host.name"
+        "host.name",
+        "endgame.subject_domain_name",
+        "endgame.subject_user_name"
     ],
     "sensitive": [
         "process.name",

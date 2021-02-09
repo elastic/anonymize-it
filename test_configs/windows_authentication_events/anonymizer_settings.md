@@ -11,8 +11,8 @@
           "observer.name": self.faker.word,
           "user.domain": self.faker.word,
           "user.name": self.faker.word,
-          "endgame.subject_user_name": self.faker.word,
-          "endgame.subject_domain_name": self.faker.word
+          "user.effective.name": self.faker.word,
+          "user.effective.domain": self.faker.word
         },
       "high_cardinality_fields": {},
       "user_regexes": {
