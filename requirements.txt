@@ -28,7 +28,7 @@ plac==0.9.6
 pluggy==0.6.0
 preshed==1.0.1
 protobuf==3.6.1
-py==1.5.3
+py==1.10.0
 pyasn1==0.4.5
 pyasn1-modules==0.2.4
 pytest==3.5.1
