@@ -15,7 +15,7 @@ google-cloud-core==2.3.0
 google-cloud-storage==2.3.0
 google-resumable-media==2.3.2
 googleapis-common-protos==1.56.1
-idna==3.3
+idna==3.7
 ipaddress==1.0.23
 more-itertools==8.13.0
 msgpack==1.0.3
